@@ -13,7 +13,8 @@ class Array():
         rotations: list of floats, ordered list of rotation angle of each pixel in degrees
 	See other function help for more info
 	'''
-    def __init__(self, n_pixels, positions, rotations):
+    def __init__(self, input_dxf_path, n_pixels, positions, rotations):
+        self.input_dxf_path = input_dxf_path
         self.n_pixels = n_pixels
         self.positions = positions
         self.rotations = rotations
