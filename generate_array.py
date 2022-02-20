@@ -32,24 +32,31 @@ PIXEL_ORDER = [406, 400, 394, 388, 382, 378, 372, 366, 360, 354, 348, 342, 336, 
                214, 208, 202, 196, 190, 184, 178, 172, 266, 278, 332, 384, 379, 322, 220, 267, 261, 255, 249, 243,
                237, 231, 225, 219, 272, 410, 414, 273, 279, 285, 291, 297, 303, 309, 315, 321, 327, 333, 339, 345, 351, 357,
                363, 369, 375, 385, 391, 397, 403, 408, 334]
-position = []
+# data: index, x, y, rotation
+data = []
 pixel_index = 0
-for (npr, fst_x, fst_y) in zip(NUMBER_PER_ROW, FIRST_ELEMENT_X_HEX, FIRST_ELEMENT_Y_HEX):
+for row,(npr, fst_x, fst_y) in enumerate(zip(NUMBER_PER_ROW, FIRST_ELEMENT_X_HEX, FIRST_ELEMENT_Y_HEX)):
     x = PIXEL_PIXEL_DISTANCE * (fst_x + 0.5*fst_y)
     y = fst_y * PIXEL_PIXEL_DISTANCE * 0.5*np.sqrt(3.0)
+    if(row%2 == 0):
+        rotation = 180
+    else:
+        rotation = 0
     for npr_i in range(npr):
-        #print("{:d}, {:.2f}, {:.2f};".format(PIXEL_ORDER[px_i], x, y))
-        position.append([PIXEL_ORDER[pixel_index], x, y])
+        data.append([PIXEL_ORDER[pixel_index], x, y, rotation])
         x += PIXEL_PIXEL_DISTANCE
         pixel_index += 1
-position = np.array(position)
-position_sorted = position[position[:, 0].argsort()]
+data = np.array(data)
+# sort array data wrt the pixel index
+data_sorted = data[data[:, 0].argsort()]
 
 array_dxf = ezdxf.new('R2018')
 
-for [i, x, y] in position_sorted:
+for [i, x, y, r] in data_sorted:
     pixel_dxf = ezdxf.readfile(Path('examples/{:d}/pixels/pixel_{:d}.dxf'.format(N_PIXEL, int(i))))
     for entity in pixel_dxf.modelspace():
+        #entity.transform(ezdxf.math.Matrix44.scale(sx=-1, sy=1, sz=1))     # yes! it works!
+        entity.transform(ezdxf.math.Matrix44.z_rotate(np.radians(r)))
         entity.transform(ezdxf.math.Matrix44.translate(x, y, 0.0))
     importer = Importer(pixel_dxf, array_dxf)
     importer.import_modelspace()
