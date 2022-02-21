@@ -57,25 +57,11 @@ for row,(npr, fst_x, fst_y) in enumerate(zip(NUMBER_PER_ROW, FIRST_ELEMENT_X_HEX
 
 data.sort(key=lambda x: x[0])
 
-xy = [tple[1:3] for tple in data]
+x = [tple[1] for tple in data]
+y = [tple[2] for tple in data]
 r = [tple[3] for tple in data]
 m = [tple[4] for tple in data]
 
 input_path = Path('examples/415/pixels')
-array = Array(input_path, 415, xy, r, m)
-
-'''
-array_dxf = ezdxf.new('R2018')
-
-for [i, x, y, r] in data_sorted:
-    pixel_dxf = ezdxf.readfile(Path('examples/{:d}/pixels/pixel_{:d}.dxf'.format(N_PIXEL, int(i))))
-    for entity in pixel_dxf.modelspace():
-        #entity.transform(ezdxf.math.Matrix44.scale(sx=-1, sy=1, sz=1))     # yes! it works!
-        entity.transform(ezdxf.math.Matrix44.z_rotate(np.radians(r)))
-        entity.transform(ezdxf.math.Matrix44.translate(x, y, 0.0))
-    importer = Importer(pixel_dxf, array_dxf)
-    importer.import_modelspace()
-    importer.finalize()
-
-array_dxf.saveas('array.dxf')
-'''
+array = Array(input_path, 415, x, y, r, m)
+array.saveFig("examples/415/array.png", dpi=400)
