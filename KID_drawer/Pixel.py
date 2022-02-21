@@ -104,9 +104,11 @@ class Pixel():
         self.absorber_area_box = self.dxf.modelspace()
         self.index_number = self.dxf.modelspace()
 
+    # draws a lwpolyline from a list of points
     def __draw_polyline(self, points, layer, entity):
         entity.add_lwpolyline(points, dxfattribs={"layer": layer})
 
+    # adds a rectangle from opposite corners coordinates as a lwpolyline
     def __draw_rectangle_corner_dimensions(self, corner0, x_size, y_size, layer, entity):
         points =    (corner0,
                     (corner0[0]+x_size, corner0[1]),
@@ -114,7 +116,7 @@ class Pixel():
                     (corner0[0], corner0[1]+y_size))
         entity.add_lwpolyline(points, close=True, dxfattribs={"layer": layer})
 
-
+    # adds a rectangle from the center coordinates and dimensions as a lwpolyline
     def __draw_rectangle_center_dimensions(self, center, x_size, y_size, layer, entity):
         points =   ((center[0]-0.5*x_size, center[1]-0.5*y_size),
                     (center[0]+0.5*x_size, center[1]-0.5*y_size),
@@ -122,13 +124,14 @@ class Pixel():
                     (center[0]-0.5*x_size, center[1]+0.5*y_size))
         entity.add_lwpolyline(points, close=True, dxfattribs={"layer": layer})
 
-
+    # draws the single digit coupling capacitor
     def __draw_coupling_capacitor(self):
         corner0 = (0, self.vertical_size+self.coupling_capacitor_y_offset)
         x_size = self.coupling_capacitor_length
         y_size = self.coupling_capacitor_width
         command = self.__draw_rectangle_corner_dimensions(corner0, x_size, y_size, self.pixel_layer_name, self.pixel)
 
+    # draws the interdigital capacitor
     def __draw_capacitor(self):
         finger_number_int = int(self.capacitor_finger_number)
 
@@ -163,7 +166,7 @@ class Pixel():
             corner0 = (0.0, 0.0)
             self.__draw_rectangle_corner_dimensions(corner0, x_size, y_size, self.pixel_layer_name, self.pixel)
 
-
+    # draws the hilbert shaped absorber
     def __draw_absorber(self):
         axiom = "X"
         X_rule = "-YF+XFX+FY-"
@@ -214,7 +217,7 @@ class Pixel():
             starting_point = [starting_point[0]+point[0], starting_point[1]+point[1]]
 
 
-
+    # draws connection lines between components
     def __connect_components(self):
         # coupling capacitor connector
         corner0 = (0.0, self.vertical_size)
@@ -231,7 +234,7 @@ class Pixel():
         corner0 = (x0, self.vertical_size-self.line_width)
         self.__draw_rectangle_corner_dimensions(corner0, x_size, y_size, self.pixel_layer_name, self.pixel)
 
-
+    # draws a cross over the absorber to find its center
     def __draw_center(self):
         # draw the diagonals to find the center
         x0 = self.absorber_separation+int(self.capacitor_finger_number)*self.capacitor_finger_width+int(self.capacitor_finger_number-1)*self.capacitor_finger_gap
@@ -240,6 +243,7 @@ class Pixel():
         points = ((x0, self.vertical_size), (x0+self.vertical_size, 0.0))
         self.__draw_polyline(points, self.center_layer_name, self.center_cross)
 
+    # draws a box over the whole pixel
     def __draw_pixel_area(self):
         cor0 = [0.0, 0.0]
         cor1 = [0.0, self.vertical_size+self.coupling_capacitor_width+self.coupling_capacitor_y_offset]
@@ -259,25 +263,28 @@ class Pixel():
         y_size = cor1[1]-cor0[1]
         self.__draw_rectangle_corner_dimensions(corner0, x_size, y_size, self.pixel_area_layer_name, self.pixel_area_box)
 
+    # draws a box over the absorber
     def __draw_absorber_area(self):
         corner0 = (self.absorber_separation+int(self.capacitor_finger_number)*self.capacitor_finger_width+int(self.capacitor_finger_number-1)*self.capacitor_finger_gap, 0.0)
         x_size = self.vertical_size
         y_size = self.vertical_size
         self.__draw_rectangle_corner_dimensions(corner0, x_size, y_size, self.absorber_area_layer_name, self.absorber_area_box)
 
+    # draws the textual index on the absorber
     def __draw_index(self):
         position = (self.absorber_separation+int(self.capacitor_finger_number)*self.capacitor_finger_width+int(self.capacitor_finger_number-1)*self.capacitor_finger_gap, 0.0)
         height = 0.35*self.vertical_size
         text = str(self.index)
         self.index_number.add_text(text, dxfattribs={'style': 'OpenSans', 'height': height, 'layer': self.index_layer_name}).set_pos(position, align='LEFT')
 
-
+    # prints on screen all the parameters
     def print_info(self):
         '''
 		Prints on screen all the parameters
 		'''
         print(self.info_string)
 
+    # saves a dxf file of the pixel
     def save_dxf(self, filename):
         '''
 		Saves a .dxf file of a single pixel
@@ -315,6 +322,7 @@ class Pixel():
                 int(self.capacitor_finger_number-1)*self.capacitor_finger_gap,
                 -0.5*self.vertical_size)
 
+        # origin on the absorber center
         for entity in self.dxf.modelspace():
             entity.transform(ezdxf.math.Matrix44.translate(center[0], center[1], 0.0))
 
