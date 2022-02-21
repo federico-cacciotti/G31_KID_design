@@ -2,9 +2,12 @@
 
 # import packages
 import ezdxf
+from ezdxf.addons.drawing.matplotlib import MatplotlibBackend
+from ezdxf.addons.drawing import Frontend, RenderContext
 import numpy as np
 import os
 from pathlib import Path
+from matplotlib import pyplot as plt
 
 
 # units: micron
@@ -137,7 +140,7 @@ class Pixel():
 
         # draw fingers
         for i in range(finger_number_int):
-            corner0 = (i*(self.capacitor_finger_width+self.capacitor_finger_gap), ((i+1)%2 + 1)*self.line_width)
+            corner0 = (i*(self.capacitor_finger_width+self.capacitor_finger_gap), ((i+1)%2)*self.capacitor_finger_gap + self.line_width)
             x_size = self.capacitor_finger_width
             y_size = self.capacitor_finger_length
             self.__draw_rectangle_corner_dimensions(corner0, x_size, y_size, self.pixel_layer_name, self.pixel)
@@ -246,22 +249,25 @@ class Pixel():
     # draws a box over the whole pixel
     def __draw_pixel_area(self):
         cor0 = [0.0, 0.0]
-        cor1 = [0.0, self.vertical_size+self.coupling_capacitor_width+self.coupling_capacitor_y_offset]
+        cor1 = [0.0, 0.0]
 
         finger_number_int = int(self.capacitor_finger_number)
-        if self.capacitor_finger_number-finger_number_int != 0.0:
-            cor0[0] = -self.capacitor_finger_gap-self.capacitor_finger_width
-
-        __line_length = (finger_number_int+1)*self.capacitor_finger_width+finger_number_int*self.capacitor_finger_gap+self.absorber_separation+self.vertical_size-2.0*self.line_width
-        if self.coupling_capacitor_length >= __line_length:
-            cor1[0] = self.coupling_capacitor_length
-        else:
-            cor1[0] = __line_length
-
-        corner0 = (cor0[0], cor0[1])
+        cor1[0] = finger_number_int*self.capacitor_finger_width+(finger_number_int-1)*self.capacitor_finger_gap+self.absorber_separation+self.vertical_size
+        cor1[1] = self.vertical_size+self.coupling_capacitor_width+self.coupling_capacitor_y_offset
         x_size = cor1[0]-cor0[0]
+
+        # check if the copuling length is longer than the pixel size
+        if self.coupling_capacitor_length > x_size:
+            cor1[0] = self.coupling_capacitor_length
+            x_size = cor1[0]-cor0[0]
+
+        # check if the extra finger is present
+        if not self.capacitor_finger_number.is_integer():
+            cor0[0] = -self.capacitor_finger_gap-self.capacitor_finger_width
+            x_size = cor1[0]-cor0[0]
+
         y_size = cor1[1]-cor0[1]
-        self.__draw_rectangle_corner_dimensions(corner0, x_size, y_size, self.pixel_area_layer_name, self.pixel_area_box)
+        self.__draw_rectangle_corner_dimensions(cor0, x_size, y_size, self.pixel_area_layer_name, self.pixel_area_box)
 
     # draws a box over the absorber
     def __draw_absorber_area(self):
@@ -327,3 +333,22 @@ class Pixel():
             entity.transform(ezdxf.math.Matrix44.translate(center[0], center[1], 0.0))
 
         self.dxf.saveas(filename)
+
+    # saves the figure of a pixel
+    def saveFig(self, filename, dpi=150):
+        '''
+        Save a figure of the drawing
+    	Parameters:
+            filename: string, output path and filename of the figure
+            dpi: int (optional), dpi of the figure, default value: 150
+        '''
+        # check if the output directory exists
+        filename = Path(filename)
+        if not os.path.exists(filename.parent):
+            os.makedirs(filename.parent)
+
+        fig = plt.figure()
+        ax = fig.add_axes([0, 0, 1, 1])
+        backend = MatplotlibBackend(ax)
+        Frontend(RenderContext(self.dxf), backend).draw_layout(self.dxf.modelspace())
+        fig.savefig(filename, dpi=dpi)
