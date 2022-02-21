@@ -64,4 +64,4 @@ m = [tple[4] for tple in data]
 
 input_path = Path('examples/415/pixels')
 array = Array(input_path, 415, x, y, r, m)
-array.saveFig("examples/415/array.png", dpi=400)
+array.saveFig("examples/415/array.png", dpi=600)
