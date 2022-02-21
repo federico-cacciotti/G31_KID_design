@@ -1,7 +1,8 @@
 import ezdxf
-from ezdxf.addons import Importer
+#from ezdxf.addons import Importer
 import numpy as np
 from pathlib import Path
+from KID_drawer import Array
 
 N_PIXEL = 415
 PIXEL_PIXEL_DISTANCE = 4200.0 # microns
@@ -9,6 +10,7 @@ NUMBER_PER_ROW = [5, 9, 12, 15, 16, 18, 19, 20, 21, 21, 21, 21, 21, 21, 21, 20, 
 NUMBER_OF_ROWS = len(NUMBER_PER_ROW)
 FIRST_ELEMENT_X_HEX = [4, 1, -1, -3, -4, -5, -6, -7, -8, -8, -9, -9, -10, -10, -11, -11, -12, -12, -12, -12, -12, -11, -11, -8, -8]
 FIRST_ELEMENT_Y_HEX = [-12, -11, -10, -9, -8, -7, -6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+MIRRORED_PIXELS = [373, 327, 368, 383, 396, 382, 407, 412, 387, 398, 333]
 
 # nearest 3 disposition
 PIXEL_ORDER = [406, 400, 394, 388, 382, 378, 372, 366, 360, 354, 348, 342, 336, 330, 335, 329, 324, 318, 312, 306,
@@ -38,18 +40,31 @@ pixel_index = 0
 for row,(npr, fst_x, fst_y) in enumerate(zip(NUMBER_PER_ROW, FIRST_ELEMENT_X_HEX, FIRST_ELEMENT_Y_HEX)):
     x = PIXEL_PIXEL_DISTANCE * (fst_x + 0.5*fst_y)
     y = fst_y * PIXEL_PIXEL_DISTANCE * 0.5*np.sqrt(3.0)
+    # rotation
     if(row%2 == 0):
-        rotation = 180
+        rotation = 180.
     else:
-        rotation = 0
+        rotation = 0.
     for npr_i in range(npr):
-        data.append([PIXEL_ORDER[pixel_index], x, y, rotation])
+        # mirroring
+        if PIXEL_ORDER[pixel_index] in MIRRORED_PIXELS:
+            mirror = 'x'
+        else:
+            mirror = 'None'
+        data.append((PIXEL_ORDER[pixel_index], x, y, rotation, mirror))
         x += PIXEL_PIXEL_DISTANCE
         pixel_index += 1
-data = np.array(data)
-# sort array data wrt the pixel index
-data_sorted = data[data[:, 0].argsort()]
 
+data.sort(key=lambda x: x[0])
+
+xy = [tple[1:3] for tple in data]
+r = [tple[3] for tple in data]
+m = [tple[4] for tple in data]
+
+input_path = Path('examples/415/pixels')
+array = Array(input_path, 415, xy, r, m)
+
+'''
 array_dxf = ezdxf.new('R2018')
 
 for [i, x, y, r] in data_sorted:
@@ -63,3 +78,4 @@ for [i, x, y, r] in data_sorted:
     importer.finalize()
 
 array_dxf.saveas('array.dxf')
+'''

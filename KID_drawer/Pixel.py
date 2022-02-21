@@ -1,6 +1,6 @@
 # KID drawer (DXF file generator) - Federico Cacciotti (c)2022
 
-# importa packages
+# import packages
 import ezdxf
 import numpy as np
 import os
@@ -77,7 +77,7 @@ class Pixel():
                                         self.absorber_separation))
 
         # Create a new DXF R2018 drawing
-        self.dxf = ezdxf.new('R2018')
+        self.dxf = ezdxf.new('R2018', setup=True)
         # layer names
         self.pixel_layer_name = "PIXEL"
         self.center_layer_name = "CENTER"
@@ -266,10 +266,10 @@ class Pixel():
         self.__draw_rectangle_corner_dimensions(corner0, x_size, y_size, self.absorber_area_layer_name, self.absorber_area_box)
 
     def __draw_index(self):
-        position = (self.absorber_separation, 0.0)
-        height = 0.4*self.vertical_size
+        position = (self.absorber_separation+int(self.capacitor_finger_number)*self.capacitor_finger_width+int(self.capacitor_finger_number-1)*self.capacitor_finger_gap, 0.0)
+        height = 0.35*self.vertical_size
         text = str(self.index)
-        self.index_number.add_text(text, dxfattribs={'height': height, 'layer': self.index_layer_name}).set_pos(position, align='LEFT')
+        self.index_number.add_text(text, dxfattribs={'style': 'OpenSans', 'height': height, 'layer': self.index_layer_name}).set_pos(position, align='LEFT')
 
 
     def print_info(self):
