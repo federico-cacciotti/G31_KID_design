@@ -8,6 +8,8 @@ import numpy as np
 import os
 from pathlib import Path
 from matplotlib import pyplot as plt
+from shapely.geometry import Polygon
+from shapely.ops import unary_union
 
 
 # units: micron
@@ -93,46 +95,47 @@ class Pixel():
         self.absorber_area_layer_color = 150
         self.center_layer_color = 120
         self.index_layer_color = 254
-        # add layers
+        # adds layers
         self.dxf.layers.add(name=self.pixel_layer_name, color=self.pixel_layer_color)
         self.dxf.layers.add(name=self.center_layer_name, color=self.center_layer_color)
         self.dxf.layers.add(name=self.pixel_area_layer_name, color=self.pixel_area_layer_color)
         self.dxf.layers.add(name=self.absorber_area_layer_name, color=self.absorber_area_layer_color)
         self.dxf.layers.add(name=self.index_layer_name, color=self.index_layer_color)
 
-        # Add new entities to the modelspace:
-        self.pixel = self.dxf.modelspace()
-        self.center_cross = self.dxf.modelspace()
-        self.pixel_area_box = self.dxf.modelspace()
-        self.absorber_area_box = self.dxf.modelspace()
-        self.index_number = self.dxf.modelspace()
+        # adds a modelspace
+        self.msp = self.dxf.modelspace()
+
+        # list of all the polygons that draw the whole pixel
+        self.pixel_polygons = []
 
     # draws a lwpolyline from a list of points
-    def __draw_polyline(self, points, layer, entity):
-        entity.add_lwpolyline(points, dxfattribs={"layer": layer})
+    def __draw_polyline(self, points, layer):
+        self.msp.add_lwpolyline(points, close=True, dxfattribs={"layer": layer})
 
     # adds a rectangle from opposite corners coordinates as a lwpolyline
-    def __draw_rectangle_corner_dimensions(self, corner0, x_size, y_size, layer, entity):
-        points =    (corner0,
+    def __draw_rectangle_corner_dimensions(self, corner0, x_size, y_size):
+        points =   ( corner0,
                     (corner0[0]+x_size, corner0[1]),
                     (corner0[0]+x_size, corner0[1]+y_size),
                     (corner0[0], corner0[1]+y_size))
-        entity.add_lwpolyline(points, close=True, dxfattribs={"layer": layer})
+        return Polygon(points)
+        #self.msp.add_lwpolyline(points, close=False, dxfattribs={"layer": layer})
 
     # adds a rectangle from the center coordinates and dimensions as a lwpolyline
-    def __draw_rectangle_center_dimensions(self, center, x_size, y_size, layer, entity):
+    def __draw_rectangle_center_dimensions(self, center, x_size, y_size):
         points =   ((center[0]-0.5*x_size, center[1]-0.5*y_size),
                     (center[0]+0.5*x_size, center[1]-0.5*y_size),
                     (center[0]+0.5*x_size, center[1]+0.5*y_size),
                     (center[0]-0.5*x_size, center[1]+0.5*y_size))
-        entity.add_lwpolyline(points, close=True, dxfattribs={"layer": layer})
+        return Polygon(points)
+        #self.msp.add_lwpolyline(points, close=False, dxfattribs={"layer": layer})
 
     # draws the single digit coupling capacitor
     def __draw_coupling_capacitor(self):
         corner0 = (0, self.vertical_size+self.coupling_capacitor_y_offset)
         x_size = self.coupling_capacitor_length
         y_size = self.coupling_capacitor_width
-        command = self.__draw_rectangle_corner_dimensions(corner0, x_size, y_size, self.pixel_layer_name, self.pixel)
+        self.pixel_polygons.append(self.__draw_rectangle_corner_dimensions(corner0, x_size, y_size))
 
     # draws the interdigital capacitor
     def __draw_capacitor(self):
@@ -143,7 +146,7 @@ class Pixel():
             corner0 = (i*(self.capacitor_finger_width+self.capacitor_finger_gap), ((i+1)%2)*self.capacitor_finger_gap + self.line_width)
             x_size = self.capacitor_finger_width
             y_size = self.capacitor_finger_length
-            self.__draw_rectangle_corner_dimensions(corner0, x_size, y_size, self.pixel_layer_name, self.pixel)
+            self.pixel_polygons.append(self.__draw_rectangle_corner_dimensions(corner0, x_size, y_size))
 
         # pinky finger
         if self.capacitor_finger_number-finger_number_int != 0.0:
@@ -151,23 +154,23 @@ class Pixel():
             corner0 = (-self.capacitor_finger_gap-self.capacitor_finger_width, self.line_width)
             x_size = self.capacitor_finger_width
             y_size = pinky_length
-            self.__draw_rectangle_corner_dimensions(corner0, x_size, y_size, self.pixel_layer_name, self.pixel)
+            self.pixel_polygons.append(self.__draw_rectangle_corner_dimensions(corner0, x_size, y_size))
 
         # draw the two horizontal lines
         # upper line
         corner0 = (0.0, self.vertical_size-self.line_width)
         x_size = finger_number_int*self.capacitor_finger_width + (finger_number_int-1)*self.capacitor_finger_gap
         y_size = self.line_width
-        self.__draw_rectangle_corner_dimensions(corner0, x_size, y_size, self.pixel_layer_name, self.pixel)
+        self.pixel_polygons.append(self.__draw_rectangle_corner_dimensions(corner0, x_size, y_size))
         # lower line
         if self.capacitor_finger_number-finger_number_int != 0.0:
             corner0 = (-self.capacitor_finger_gap-self.capacitor_finger_width, 0.0)
             x_size = (finger_number_int+1)*self.capacitor_finger_width + finger_number_int*self.capacitor_finger_gap
             y_size = self.line_width
-            self.__draw_rectangle_corner_dimensions(corner0, x_size, y_size, self.pixel_layer_name, self.pixel)
+            self.pixel_polygons.append(self.__draw_rectangle_corner_dimensions(corner0, x_size, y_size))
         else:
             corner0 = (0.0, 0.0)
-            self.__draw_rectangle_corner_dimensions(corner0, x_size, y_size, self.pixel_layer_name, self.pixel)
+            self.pixel_polygons.append(self.__draw_rectangle_corner_dimensions(corner0, x_size, y_size))
 
     # draws the hilbert shaped absorber
     def __draw_absorber(self):
@@ -216,9 +219,8 @@ class Pixel():
             center = (0.5*(2*starting_point[0]+point[0]), 0.5*(2*starting_point[1]+point[1]))
             x_size = np.abs(point[0])+self.line_width
             y_size = np.abs(point[1])+self.line_width
-            self.__draw_rectangle_center_dimensions(center, x_size, y_size, self.pixel_layer_name, self.pixel)
+            self.pixel_polygons.append(self.__draw_rectangle_center_dimensions(center, x_size, y_size))
             starting_point = [starting_point[0]+point[0], starting_point[1]+point[1]]
-
 
     # draws connection lines between components
     def __connect_components(self):
@@ -226,25 +228,25 @@ class Pixel():
         corner0 = (0.0, self.vertical_size)
         x_size = self.coupling_connector_width
         y_size = self.coupling_capacitor_y_offset
-        self.__draw_rectangle_corner_dimensions(corner0, x_size, y_size, self.pixel_layer_name, self.pixel)
+        self.pixel_polygons.append(self.__draw_rectangle_corner_dimensions(corner0, x_size, y_size))
 
         # absorber connectors
         x0 = int(self.capacitor_finger_number)*self.capacitor_finger_width+int(self.capacitor_finger_number-1)*self.capacitor_finger_gap
         corner0 = (x0, 0.0)
         x_size = self.absorber_separation
         y_size = self.line_width
-        self.__draw_rectangle_corner_dimensions(corner0, x_size, y_size, self.pixel_layer_name, self.pixel)
+        self.pixel_polygons.append(self.__draw_rectangle_corner_dimensions(corner0, x_size, y_size))
         corner0 = (x0, self.vertical_size-self.line_width)
-        self.__draw_rectangle_corner_dimensions(corner0, x_size, y_size, self.pixel_layer_name, self.pixel)
+        self.pixel_polygons.append(self.__draw_rectangle_corner_dimensions(corner0, x_size, y_size))
 
     # draws a cross over the absorber to find its center
     def __draw_center(self):
         # draw the diagonals to find the center
         x0 = self.absorber_separation+int(self.capacitor_finger_number)*self.capacitor_finger_width+int(self.capacitor_finger_number-1)*self.capacitor_finger_gap
         points = ((x0, 0.0), (x0+self.vertical_size, self.vertical_size))
-        self.__draw_polyline(points, self.center_layer_name, self.center_cross)
+        self.__draw_polyline(points, self.center_layer_name)
         points = ((x0, self.vertical_size), (x0+self.vertical_size, 0.0))
-        self.__draw_polyline(points, self.center_layer_name, self.center_cross)
+        self.__draw_polyline(points, self.center_layer_name)
 
     # draws a box over the whole pixel
     def __draw_pixel_area(self):
@@ -267,21 +269,21 @@ class Pixel():
             x_size = cor1[0]-cor0[0]
 
         y_size = cor1[1]-cor0[1]
-        self.__draw_rectangle_corner_dimensions(cor0, x_size, y_size, self.pixel_area_layer_name, self.pixel_area_box)
+        self.__draw_polyline(self.__draw_rectangle_corner_dimensions(cor0, x_size, y_size).exterior.coords, self.pixel_area_layer_name)
 
     # draws a box over the absorber
     def __draw_absorber_area(self):
         corner0 = (self.absorber_separation+int(self.capacitor_finger_number)*self.capacitor_finger_width+int(self.capacitor_finger_number-1)*self.capacitor_finger_gap, 0.0)
         x_size = self.vertical_size
         y_size = self.vertical_size
-        self.__draw_rectangle_corner_dimensions(corner0, x_size, y_size, self.absorber_area_layer_name, self.absorber_area_box)
+        self.__draw_polyline(self.__draw_rectangle_corner_dimensions(corner0, x_size, y_size).exterior.coords, self.absorber_area_layer_name)
 
     # draws the textual index on the absorber
     def __draw_index(self):
         position = (self.absorber_separation+int(self.capacitor_finger_number)*self.capacitor_finger_width+int(self.capacitor_finger_number-1)*self.capacitor_finger_gap, 0.0)
         height = 0.35*self.vertical_size
         text = str(self.index)
-        self.index_number.add_text(text, dxfattribs={'style': 'OpenSans', 'height': height, 'layer': self.index_layer_name}).set_pos(position, align='LEFT')
+        self.msp.add_text(text, dxfattribs={'height': height, 'layer': self.index_layer_name}).set_pos(position, align='LEFT')
 
     # prints on screen all the parameters
     def print_info(self):
@@ -316,6 +318,10 @@ class Pixel():
         self.__draw_capacitor()
         self.__draw_absorber()
         self.__connect_components()
+        # merge all the polygons of the pixel layer and draw a single polyline
+        pixel_pl = unary_union(self.pixel_polygons)
+        self.__draw_polyline(pixel_pl.exterior.coords, self.pixel_layer_name)
+        # draw other layers above the pixel
         self.__draw_center()
         self.__draw_pixel_area()
         self.__draw_absorber_area()
@@ -329,7 +335,7 @@ class Pixel():
                 -0.5*self.vertical_size)
 
         # origin on the absorber center
-        for entity in self.dxf.modelspace():
+        for entity in self.msp:
             entity.transform(ezdxf.math.Matrix44.translate(center[0], center[1], 0.0))
 
         self.dxf.saveas(filename)
@@ -350,5 +356,5 @@ class Pixel():
         fig = plt.figure()
         ax = fig.add_axes([0, 0, 1, 1])
         backend = MatplotlibBackend(ax)
-        Frontend(RenderContext(self.dxf), backend).draw_layout(self.dxf.modelspace())
+        Frontend(RenderContext(self.dxf), backend).draw_layout(self.msp)
         fig.savefig(filename, dpi=dpi)
