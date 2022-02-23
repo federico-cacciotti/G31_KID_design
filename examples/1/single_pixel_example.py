@@ -7,7 +7,7 @@ pixel = Pixel(index = 1,
               coupling_capacitor_width = 100.0,
               coupling_connector_width = 20.0,
               coupling_capacitor_y_offset = 130.0,
-              capacitor_finger_number = 5.50
+              capacitor_finger_number = 5.50,
               capacitor_finger_gap = 15.0,
               capacitor_finger_width = 7.0,
               hilbert_order = 4,
