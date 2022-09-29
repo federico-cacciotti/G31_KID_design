@@ -1,6 +1,6 @@
 from KID_drawer import Pixel
 
-pixel = Pixel(index = 1,
+pixel = PixelStyle1(index = 1,
               vertical_size = 1500.0,
               line_width = 4.0,
               coupling_capacitor_length = 1850.0,
