@@ -1,0 +1,10 @@
+README.md
+pyproject.toml
+src/G31_KID_design/Array.py
+src/G31_KID_design/PixelStyle1.py
+src/G31_KID_design/PixelStyle2.py
+src/G31_KID_design/__init__.py
+src/G31_KID_design.egg-info/PKG-INFO
+src/G31_KID_design.egg-info/SOURCES.txt
+src/G31_KID_design.egg-info/dependency_links.txt
+src/G31_KID_design.egg-info/top_level.txt
