@@ -1,3 +1,4 @@
+.gitignore
 .DS_Store
 local_tests/
 src/G31_KID_design/__pycache__
