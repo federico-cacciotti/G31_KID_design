@@ -1,5 +1,7 @@
 # Kinetic Inductance Detector drawer - KID drawer
-(version 1.0.0 - 04/10/2022)
+
+# Stable versions and changelog
+- 1.0.1 - October 4th, 2022 first release
 
 With this package it is possible to generate .dxf design files of Kinetic Inductance Detectors (KIDs) starting from geometrical parameters defined below:
 

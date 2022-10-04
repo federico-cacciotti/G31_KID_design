@@ -1,6 +1,6 @@
 [project]
 name = "G31_KID_design"
-version = "1.0.0"
+version = "1.0.1"
 authors = [
   {name="Federico Cacciotti", email="federico.cacciotti@roma1.infn.it" },
 ]
@@ -12,6 +12,9 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
+
+[build-system]
+requires = ["numpy", "os", "matplotlib", "pathlib", "shapely ~= 1.8.0", "ezdxf == 0.17.2"]
 
 [project.urls]
 "Homepage" = "https://github.com/federico-cacciotti/G31_KID_design"
