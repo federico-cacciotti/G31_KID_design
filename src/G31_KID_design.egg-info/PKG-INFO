@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: G31-KID-design
-Version: 1.0.0
+Version: 1.0.1
 Summary: An AutoCAD library for KID design
 Author-email: Federico Cacciotti <federico.cacciotti@roma1.infn.it>
 Project-URL: Homepage, https://github.com/federico-cacciotti/G31_KID_design
@@ -11,7 +11,9 @@ Requires-Python: >=3.7
 Description-Content-Type: text/markdown
 
 # Kinetic Inductance Detector drawer - KID drawer
-(version 1.0.0 - 04/10/2022)
+
+# Stable versions and changelog
+- 1.0.1 - October 4th, 2022 first release
 
 With this package it is possible to generate .dxf design files of Kinetic Inductance Detectors (KIDs) starting from geometrical parameters defined below:
 
