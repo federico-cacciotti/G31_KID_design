@@ -14,7 +14,7 @@ classifiers = [
 ]
 
 [build-system]
-requires = ["numpy", "os", "matplotlib", "pathlib", "shapely ~= 1.8.0", "ezdxf == 0.17.2"]
+requires = ["numpy", "matplotlib", "pathlib", "shapely ~= 1.8.0", "ezdxf == 0.17.2"]
 
 [project.urls]
 "Homepage" = "https://github.com/federico-cacciotti/G31_KID_design"
