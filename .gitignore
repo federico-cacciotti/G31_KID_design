@@ -1,6 +1,3 @@
 .DS_Store
-KID_drawer/__pycache__
-xy_coordinates.py
-
-test01.py
-test02.py
+local_tests/
+src/G31_KID_design/__pycache__
