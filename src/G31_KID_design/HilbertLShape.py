@@ -1,21 +1,22 @@
 # KID drawer (DXF file generator) - Federico Cacciotti (c)2022
-#
-#
-#            _____________     _________      _________
-#           |   |         |   |         |    |         |
-#   __      | | | |   ____|   |____     |____|     ____|
-#  |  |     | | | |  |             |              |
-#  |  |     | | | |  |     ___     |     ____     |____
-#  |  |     | | | |  |    |   |    |    |    |         |
-#  |  |     | | | |  |____|   |____|    |    |_________|
-#  |  |     | | | |                     |
-#  |  |     | | | |   ____     ____     |     _________
-#  |  |     | | | |  |    |   |    |    |    |         |
-#  |  |     | | | |  |    |___|    |    |____|     ____|
-#  |  |     | | | |  |             |              |
-#  |  |     | | | |  |____     ____|     ____     |____
-#  |  |     | | | |       |   |         |    |         |
-#  |__|_______|___|_______|   |_________|    |_________|
+#     ____________________________________
+#    |____________________________________|
+#    |
+#    |_____________     _________      _________
+#    |   |         |   |         |    |         |
+#    | | | |   ____|   |____     |____|     ____|
+#    | | | |  |             |              |
+#    | | | |  |     ___     |     ____     |____
+#    | | | |  |    |   |    |    |    |         |
+#    | | | |  |____|   |____|    |    |_________|
+#    | | | |                     |
+#  | | | | |   ____     ____     |     _________
+#  | | | | |  |    |   |    |    |    |         |
+#  | | | | |  |    |___|    |    |____|     ____|
+#  | | | | |  |             |              |
+#  | | | | |  |____     ____|     ____     |____
+#  | | | | |       |   |         |    |         |
+#  |___|___|_______|   |_________|    |_________|
 #
 
 # import packages
@@ -31,31 +32,69 @@ from shapely.ops import unary_union
 
 
 # units: micron
-class PixelStyle2():
-    '''
-	Parameters (all the distances are in units of micron):
-		index: int, the id of the pixel
-		vertical_size: float, edge size of the absorber
-		line_width: float, width of the conductive path
-		coupling_capacitor_length: float, length of the coupling capacitor
-		coupling_capacitor_width: float, width of the coupling capacitor
-		coupling_connector_width: float, width of the conductive segment that goes
-			from the pixel to the coupling capacitor
-		coupling_capacitor_y_offset: float, vertical separation between the pixel
-			and the coupling capacitor
-		capacitor_finger_number: float, number of fingers of the interdigital capacitor
-			with decimal digits meaning a extra finger of variable length
-		capacitor_finger_gap: float, gap between interdigitated fingers
-		capacitor_finger_width: float, width of the interdigitated fingers
-		hilbert_order: int, hilbert order of the absorber (it is reccommended to not
-			exceed the 7th order for computational reasons)
-		absorber_separation: float, horizontal separation of the absorber from the
-			capacitor
-	See other function help for more info
-	'''
+class HilbertLShape():
     def __init__(self, index, vertical_size, line_width, coupling_capacitor_length, coupling_capacitor_width,
                  coupling_connector_width, coupling_capacitor_y_offset, capacitor_finger_number,
                  capacitor_finger_gap, capacitor_finger_width, hilbert_order, absorber_separation):
+        '''
+        This class generates a pixel design like the image below:
+                 ____________________________________       
+                |____________________________________|      
+                |                                           
+                |_____________     _________      _________ 
+                |   |         |   |         |    |         |
+                | | | |   ____|   |____     |____|     ____|
+                | | | |  |             |              |     
+                | | | |  |     ___     |     ____     |____ 
+                | | | |  |    |   |    |    |    |         |
+                | | | |  |____|   |____|    |    |_________|
+                | | | |                     |               
+              | | | | |   ____     ____     |     _________ 
+              | | | | |  |    |   |    |    |    |         |
+              | | | | |  |    |___|    |    |____|     ____|
+              | | | | |  |             |              |     
+              | | | | |  |____     ____|     ____     |____ 
+              | | | | |       |   |         |    |         |
+              |___|___|_______|   |_________|    |_________|
+
+        Parameters
+        ----------
+        index : int
+            The index number of the pixel.
+        vertical_size : float
+            Edge size of the absorber in microns.
+        line_width : float
+            Width of the conductive path in microns.
+        coupling_capacitor_length : float
+            Length of the coupling capacitor in microns.
+        coupling_capacitor_width : float
+            Width of the coupling capacitor in microns.
+        coupling_connector_width : float
+            Width of the conductive segment that goes from the pixel to the 
+            coupling capacitor in microns.
+        coupling_capacitor_y_offset : float
+            Vertical separation between the pixel and the coupling capacitor
+            in microns.
+        capacitor_finger_number : float
+            Number of fingers of the interdigital capacitor with decimal digits
+            meaning an extra finger of variable length.
+        capacitor_finger_gap : float
+            Gap between interdigitated fingers in microns.
+        capacitor_finger_width : float
+            Width of the interdigitated fingers in microns.
+        hilbert_order : int
+            Hilbert order of the absorber (it is reccommended to not exceed 
+            the 7th order for computational reasons, but you can do the f*ck 
+            you want though :) ).
+        absorber_separation : float
+            Horizontal separation of the absorber from the capacitor in 
+            microns.
+
+        Returns
+        -------
+        None.
+
+        '''
         self.index = index
         self.vertical_size = vertical_size
         self.line_width = line_width
@@ -70,8 +109,7 @@ class PixelStyle2():
         self.hilbert_order = hilbert_order
         self.absorber_separation = absorber_separation
 
-        self.info_string = ("\n"
-                            "units: microns\n"
+        self.info_string = ("units: microns\n"
                             "index:                       {:d}\n"
                             "vertical_size:               {:.2f}\n"
                             "line_width:                  {:.2f}\n"
@@ -148,7 +186,7 @@ class PixelStyle2():
         return Polygon(points)
         #self.msp.add_lwpolyline(points, close=False, dxfattribs={"layer": layer})
 
-    # draws the single digit coupling capacitor
+    # draws the single coupling capacitor
     def __draw_coupling_capacitor(self):
         corner0 = (0, self.vertical_size+self.coupling_capacitor_y_offset)
         x_size = self.coupling_capacitor_length
@@ -296,7 +334,7 @@ class PixelStyle2():
         y_size = self.vertical_size
         self.__draw_polyline(self.__draw_rectangle_corner_dimensions(corner0, x_size, y_size).exterior.coords, self.absorber_area_layer_name)
 
-    # draws the textual index on the absorber
+    # draws the text index on the absorber
     def __draw_index(self):
         position = (self.absorber_separation+int(self.capacitor_finger_number)*self.capacitor_finger_width+int(self.capacitor_finger_number-1)*self.capacitor_finger_gap, 0.0)
         height = 0.35*self.vertical_size
@@ -306,26 +344,40 @@ class PixelStyle2():
     # prints on screen all the parameters
     def print_info(self):
         '''
-		Prints on screen all the parameters
-		'''
+		This function prints on screen all the design parameters and 
+        information
+
+        Returns
+        -------
+        None.
+
+        '''
         print(self.info_string)
 
     # saves a dxf file of the pixel
     def save_dxf(self, filename):
         '''
-		Saves a .dxf file of a single pixel
-		Parameters:
-			filename: String, the path and name of the script file (ex. 'a/b/pixel0.scr')
-		Output:
-			This function creates a .dxf file in the directory specified in the filename parameter.
-			The drawing has many layers:
-				- PIXEL: the actual layer where the KID is shown
-				- PIXEL_AREA: a layer where a rectangle encloses the whole pixel
-				- ABSORBER_AREA: a layer where a square encloses the absorber section of the KID
-				- CENTER: a layer where the two diagonals of the ABSORBER_AREA square are shown
-				- INDEX: a layer where the self.index value of the pixel is shown
-			The output drawing has the absorber centered to the origin
-		'''
+        This function saves a .dxf file of a pixel design.
+        The drawing has many layers:
+            - PIXEL: the actual layer where the KID is shown
+            - PIXEL_AREA: a layer where a rectangle encloses the whole pixel
+            - ABSORBER_AREA: a layer where a square encloses the absorber 
+                section of the KID
+            - CENTER: a layer where the two diagonals of the ABSORBER_AREA 
+                square are shown
+            - INDEX: a layer where the self.index value of the pixel is shown
+        The output drawing has the absorber centered to the origin.
+
+        Parameters
+        ----------
+        filename : string
+            The path and name of the script file (ex. 'a/b/pixel0.scr').
+
+        Returns
+        -------
+        None.
+
+        '''
         # make dxf directory
         filename = Path(filename)
         if not os.path.exists(filename.parent):
@@ -359,12 +411,21 @@ class PixelStyle2():
         self.dxf.saveas(filename)
 
     # saves the figure of a pixel
-    def saveFig(self, filename, dpi=150):
+    def saveFig(self, filename, dpi=250):
         '''
-        Save a figure of the drawing
-    	Parameters:
-            filename: string, output path and filename of the figure
-            dpi: int (optional), dpi of the figure, default value: 150
+        This function saves a figure of the array design.
+        
+    	Parameters
+        ----------
+        filename : string
+            Output path and filename of the figure.
+        dpi : int, optional
+            Dpi of the figure. The default is 250.
+                
+        Returns
+        -------
+        None.
+        
         '''
         # check if the output directory exists
         filename = Path(filename)
