@@ -69,4 +69,4 @@ The following image shows an example of a real KID generated with this package.
 ![example](/images/example.png)
 
 # Examples
-In the `example` directory you can find many examples showing how to use this package.
+In the `examples` directory you can find many examples showing how to use this package.
