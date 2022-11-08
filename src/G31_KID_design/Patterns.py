@@ -5,7 +5,7 @@ from matplotlib.textpath import TextPath
 from matplotlib.patches import PathPatch
 from matplotlib.font_manager import FontProperties
 
-def circularTriangleLattice(radius, pitch, element_dimension, rotation=0):
+def circularTriangleLattice(radius, pitch, element_dimension=100.0, rotation=0):
     '''
     This function generates the coordinates of a triangular lattice inside a 
     circle of a given radius
@@ -43,14 +43,14 @@ def circularTriangleLattice(radius, pitch, element_dimension, rotation=0):
     
     x_step = pitch
     y_step = pitch * np.sqrt(3)*0.5
-    maximum_number_diameter_x = int(radius*2.0 // x_step)
-    maximum_number_diameter_y = int(radius*2.0 // y_step)
-    x_min = -(radius // x_step)*x_step
-    y_min = -(radius // y_step)*y_step
+    #maximum_number_diameter_x = int(radius // x_step)*2 - 1
+    #maximum_number_diameter_y = int(radius // y_step)*2 - 1
+    x_min = -int(radius // x_step)*x_step#-(radius // x_step)*x_step
+    y_min = -int(radius // y_step)*y_step#-(radius // y_step)*y_step
 
-    for i,y_i in enumerate(np.linspace(y_min, -y_min, num=maximum_number_diameter_y)):
-        for j,x_j in enumerate(np.linspace(x_min, -x_min, num=maximum_number_diameter_x)):
-            if (y_i**2. + (x_j+((i+1)%2)*x_step*0.5)**2.0) <= (radius-element_dimension/np.sqrt(2))**2.0:
+    for i,y_i in enumerate(np.arange(y_min-y_step, -y_min+1, step=y_step)):
+        for j,x_j in enumerate(np.arange(x_min-x_step, -x_min+1, step=x_step)):
+            if (y_i**2. + (x_j+((i+1)%2)*x_step*0.5)**2.0) <= radius**2.0:#(radius-element_dimension/np.sqrt(2))**2.0:
                 x.append(x_j+((i+1)%2)*x_step*0.5)
                 y.append(y_i)
                 
