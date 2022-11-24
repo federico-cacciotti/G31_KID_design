@@ -50,8 +50,8 @@ def circularTriangleLattice(radius, pitch, element_dimension=100.0, rotation=0):
 
     for i,y_i in enumerate(np.arange(y_min-y_step, -y_min+1, step=y_step)):
         for j,x_j in enumerate(np.arange(x_min-x_step, -x_min+1, step=x_step)):
-            if (y_i**2. + (x_j+((i+1)%2)*x_step*0.5)**2.0) <= radius**2.0:#(radius-element_dimension/np.sqrt(2))**2.0:
-                x.append(x_j+((i+1)%2)*x_step*0.5)
+            if (y_i**2. + (x_j+((i)%2)*x_step*0.5)**2.0) <= radius**2.0:#(radius-element_dimension/np.sqrt(2))**2.0:
+                x.append(x_j+((i)%2)*x_step*0.5)
                 y.append(y_i)
                 
                 # check rotation parameter
