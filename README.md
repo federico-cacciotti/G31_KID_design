@@ -1,32 +1,12 @@
 # G31_KID_design package
 This Python package allows one to quickly generate an array of Kinetic Inductance Detectors as well as single pixels. I developed this package during my master thesis period and it is still an ongoing project for my PhD.
 
-# How to install
 The use of this package is recommended under Linux or Mac OS. This software is developed under Mac OS.
 
-### Using the pip package
-Make sure you are using a `>=3.7` Python version and the latest `pip` version available by executing, for Mac Os / Linux users, the following command
-```shell
-python3 -m pip install --upgrade pip
-```
-or, for Windows users,
-```shell
-py -m pip install --upgrade pip
-```
-Then proceed with the package installation by typing
-```shell
-pip install G31_KID_design
-```
-and you are done.
-
-### Required third-party packages
+# Required third-party packages
 In order to make things working the following packages are mandatory.
 - `ezdxf`: version >=0.17.2 (thank you `mozman` for allowing me to ease my back and save time) [here](https://github.com/mozman/ezdxf) you can find the repo to this package;
 - `shapely`: version >=1.8.0. [Here](https://github.com/shapely) the link to the repo!
-
-# Stable versions and changelog
-- 1.0.3 - October 10th, 2022. A preview plot of an array design has been added. Also two new functions allow to generate more quickly the coordinate pattern of both a triangular lattice and a square lattice inside a circle.
-- 1.0.1 - October 4th, 2022. First release.
 
 # Overview
 With this package it is possible to generate .dxf design files of Kinetic Inductance Detectors (KIDs) starting from geometrical parameters defined below:
