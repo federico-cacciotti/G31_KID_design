@@ -29,6 +29,7 @@ from pathlib import Path
 from matplotlib import pyplot as plt
 from shapely.geometry import Polygon
 from shapely.ops import unary_union
+from . import functions as fc
 
 
 # units: micron
@@ -163,35 +164,40 @@ class HilbertLShape():
 
         # list of all the polygons that draw the whole pixel
         self.__pixel_polygons__ = []
+        
+        
+        # draw the pixel
+        self.__draw_coupling_capacitor()
+        self.__draw_capacitor()
+        self.__draw_absorber()
+        self.__connect_components()
+        # merge all the polygons of the pixel layer and draw a single polyline
+        pixel_pl = unary_union(self.__pixel_polygons__)
+        points = pixel_pl.exterior.coords
+        self.msp.add_lwpolyline(points, close=True, dxfattribs={"layer": self.pixel_layer_name})
+        # draw other layers above the pixel
+        self.__draw_center()
+        self.__draw_pixel_area()
+        self.__draw_absorber_area()
+        self.__draw_index()
 
-    # draws a lwpolyline from a list of points
-    def __draw_polyline(self, points, layer):
-        self.msp.add_lwpolyline(points, close=True, dxfattribs={"layer": layer})
+        # center position of the absorber
+        self.absorber_center = (-0.5*self.vertical_size-self.absorber_separation-
+                                int(self.capacitor_finger_number)*self.capacitor_finger_width-
+                                int(self.capacitor_finger_number-1)*self.capacitor_finger_gap,
+                                -0.5*self.vertical_size)
+        
+        # origin on the absorber center
+        for entity in self.msp:
+            entity.transform(ezdxf.math.Matrix44.translate(self.absorber_center[0], self.absorber_center[1], 0.0))
 
-    # adds a rectangle from opposite corners coordinates as a lwpolyline
-    def __draw_rectangle_corner_dimensions(self, corner0, x_size, y_size):
-        points =   ( corner0,
-                    (corner0[0]+x_size, corner0[1]),
-                    (corner0[0]+x_size, corner0[1]+y_size),
-                    (corner0[0], corner0[1]+y_size))
-        return Polygon(points)
-        #self.msp.add_lwpolyline(points, close=False, dxfattribs={"layer": layer})
-
-    # adds a rectangle from the center coordinates and dimensions as a lwpolyline
-    def __draw_rectangle_center_dimensions(self, center, x_size, y_size):
-        points =   ((center[0]-0.5*x_size, center[1]-0.5*y_size),
-                    (center[0]+0.5*x_size, center[1]-0.5*y_size),
-                    (center[0]+0.5*x_size, center[1]+0.5*y_size),
-                    (center[0]-0.5*x_size, center[1]+0.5*y_size))
-        return Polygon(points)
-        #self.msp.add_lwpolyline(points, close=False, dxfattribs={"layer": layer})
 
     # draws the single coupling capacitor
     def __draw_coupling_capacitor(self):
         corner0 = (0, self.vertical_size+self.coupling_capacitor_y_offset)
         x_size = self.coupling_capacitor_length
         y_size = self.coupling_capacitor_width
-        self.__pixel_polygons__.append(self.__draw_rectangle_corner_dimensions(corner0, x_size, y_size))
+        self.__pixel_polygons__.append(fc.draw_rectangle_corner_dimensions(corner0, x_size, y_size))
 
     # draws the interdigital capacitor
     def __draw_capacitor(self):
@@ -202,7 +208,7 @@ class HilbertLShape():
             corner0 = (i*(self.capacitor_finger_width+self.capacitor_finger_gap), ((i+1)%2)*self.capacitor_finger_gap + self.line_width)
             x_size = self.capacitor_finger_width
             y_size = self.capacitor_finger_length
-            self.__pixel_polygons__.append(self.__draw_rectangle_corner_dimensions(corner0, x_size, y_size))
+            self.__pixel_polygons__.append(fc.draw_rectangle_corner_dimensions(corner0, x_size, y_size))
 
         # pinky finger
         if self.capacitor_finger_number-finger_number_int != 0.0:
@@ -210,23 +216,23 @@ class HilbertLShape():
             corner0 = (-self.capacitor_finger_gap-self.capacitor_finger_width, self.line_width)
             x_size = self.capacitor_finger_width
             y_size = pinky_length
-            self.__pixel_polygons__.append(self.__draw_rectangle_corner_dimensions(corner0, x_size, y_size))
+            self.__pixel_polygons__.append(fc.draw_rectangle_corner_dimensions(corner0, x_size, y_size))
 
         # draw the two horizontal lines
         # upper line
         corner0 = (0.0, self.vertical_size-self.line_width)
         x_size = finger_number_int*self.capacitor_finger_width + (finger_number_int-1)*self.capacitor_finger_gap
         y_size = self.line_width
-        self.__pixel_polygons__.append(self.__draw_rectangle_corner_dimensions(corner0, x_size, y_size))
+        self.__pixel_polygons__.append(fc.draw_rectangle_corner_dimensions(corner0, x_size, y_size))
         # lower line
         if self.capacitor_finger_number-finger_number_int != 0.0:
             corner0 = (-self.capacitor_finger_gap-self.capacitor_finger_width, 0.0)
             x_size = (finger_number_int+1)*self.capacitor_finger_width + finger_number_int*self.capacitor_finger_gap
             y_size = self.line_width
-            self.__pixel_polygons__.append(self.__draw_rectangle_corner_dimensions(corner0, x_size, y_size))
+            self.__pixel_polygons__.append(fc.draw_rectangle_corner_dimensions(corner0, x_size, y_size))
         else:
             corner0 = (0.0, 0.0)
-            self.__pixel_polygons__.append(self.__draw_rectangle_corner_dimensions(corner0, x_size, y_size))
+            self.__pixel_polygons__.append(fc.draw_rectangle_corner_dimensions(corner0, x_size, y_size))
 
     # draws the hilbert shaped absorber
     def __draw_absorber(self):
@@ -275,7 +281,7 @@ class HilbertLShape():
             center = (0.5*(2*starting_point[0]+point[0]), 0.5*(2*starting_point[1]+point[1]))
             x_size = np.abs(point[0])+self.line_width
             y_size = np.abs(point[1])+self.line_width
-            self.__pixel_polygons__.append(self.__draw_rectangle_center_dimensions(center, x_size, y_size))
+            self.__pixel_polygons__.append(fc.draw_rectangle_center_dimensions(center, x_size, y_size))
             starting_point = [starting_point[0]+point[0], starting_point[1]+point[1]]
 
     # draws connection lines between components
@@ -284,25 +290,25 @@ class HilbertLShape():
         corner0 = (0.0, self.vertical_size)
         x_size = self.coupling_connector_width
         y_size = self.coupling_capacitor_y_offset
-        self.__pixel_polygons__.append(self.__draw_rectangle_corner_dimensions(corner0, x_size, y_size))
+        self.__pixel_polygons__.append(fc.draw_rectangle_corner_dimensions(corner0, x_size, y_size))
 
         # absorber connectors
         x0 = int(self.capacitor_finger_number)*self.capacitor_finger_width+int(self.capacitor_finger_number-1)*self.capacitor_finger_gap
         corner0 = (x0, 0.0)
         x_size = self.absorber_separation
         y_size = self.line_width
-        self.__pixel_polygons__.append(self.__draw_rectangle_corner_dimensions(corner0, x_size, y_size))
+        self.__pixel_polygons__.append(fc.draw_rectangle_corner_dimensions(corner0, x_size, y_size))
         corner0 = (x0, self.vertical_size-self.line_width)
-        self.__pixel_polygons__.append(self.__draw_rectangle_corner_dimensions(corner0, x_size, y_size))
+        self.__pixel_polygons__.append(fc.draw_rectangle_corner_dimensions(corner0, x_size, y_size))
 
     # draws a cross over the absorber to find its center
     def __draw_center(self):
         # draw the diagonals to find the center
         x0 = self.absorber_separation+int(self.capacitor_finger_number)*self.capacitor_finger_width+int(self.capacitor_finger_number-1)*self.capacitor_finger_gap
         points = ((x0, 0.0), (x0+self.vertical_size, self.vertical_size))
-        self.__draw_polyline(points, self.center_layer_name)
+        self.msp.add_lwpolyline(points, close=True, dxfattribs={"layer": self.center_layer_name})
         points = ((x0, self.vertical_size), (x0+self.vertical_size, 0.0))
-        self.__draw_polyline(points, self.center_layer_name)
+        self.msp.add_lwpolyline(points, close=True, dxfattribs={"layer": self.center_layer_name})
 
     # draws a box over the whole pixel
     def __draw_pixel_area(self):
@@ -325,14 +331,17 @@ class HilbertLShape():
             x_size = cor1[0]-cor0[0]
 
         y_size = cor1[1]-cor0[1]
-        self.__draw_polyline(self.__draw_rectangle_corner_dimensions(cor0, x_size, y_size).exterior.coords, self.pixel_area_layer_name)
+        
+        points = fc.draw_rectangle_corner_dimensions(cor0, x_size, y_size).exterior.coords
+        self.msp.add_lwpolyline(points, close=True, dxfattribs={"layer": self.pixel_area_layer_name})
 
     # draws a box over the absorber
     def __draw_absorber_area(self):
         corner0 = (self.absorber_separation+int(self.capacitor_finger_number)*self.capacitor_finger_width+int(self.capacitor_finger_number-1)*self.capacitor_finger_gap, 0.0)
         x_size = self.vertical_size
         y_size = self.vertical_size
-        self.__draw_polyline(self.__draw_rectangle_corner_dimensions(corner0, x_size, y_size).exterior.coords, self.absorber_area_layer_name)
+        points = fc.draw_rectangle_corner_dimensions(corner0, x_size, y_size).exterior.coords
+        self.msp.add_lwpolyline(points, close=True, dxfattribs={"layer": self.absorber_area_layer_name})
 
     # draws the text index on the absorber
     def __draw_index(self):
@@ -382,31 +391,6 @@ class HilbertLShape():
         filename = Path(filename)
         if not os.path.exists(filename.parent):
             os.makedirs(filename.parent)
-
-        # draw pixel
-        self.__draw_coupling_capacitor()
-        self.__draw_capacitor()
-        self.__draw_absorber()
-        self.__connect_components()
-        # merge all the polygons of the pixel layer and draw a single polyline
-        pixel_pl = unary_union(self.__pixel_polygons__)
-        self.__draw_polyline(pixel_pl.exterior.coords, self.pixel_layer_name)
-        # draw other layers above the pixel
-        self.__draw_center()
-        self.__draw_pixel_area()
-        self.__draw_absorber_area()
-        self.__draw_index()
-
-        # center position of the absorber
-        center=(-0.5*self.vertical_size-
-                self.absorber_separation-
-                int(self.capacitor_finger_number)*self.capacitor_finger_width-
-                int(self.capacitor_finger_number-1)*self.capacitor_finger_gap,
-                -0.5*self.vertical_size)
-
-        # origin on the absorber center
-        for entity in self.msp:
-            entity.transform(ezdxf.math.Matrix44.translate(center[0], center[1], 0.0))
 
         self.dxf.saveas(filename)
 
