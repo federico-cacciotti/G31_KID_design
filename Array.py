@@ -12,7 +12,7 @@ from matplotlib import pyplot as plt
 import os
 
 class Array():
-    def __init__(self, input_dxf_path, n_pixels, x_pos, y_pos, rotation=None, mirror=None, output_dxf='array.dxf', feedline_dxf=None, focal_plane_dxf=None, wafer_limits=None):
+    def __init__(self, input_dxf_path, n_pixels, x_pos, y_pos, rotation=None, mirror=None, output_dxf='array.dxf', feedline_dxf=None, wafer_dxf=None):
         '''
         This class is used for the generation of an array design.
 
@@ -38,11 +38,7 @@ class Array():
         feedline_dxf : string, optional
             The path to a .dxf file with the feedline drawing. The drawing must
             be placed on the 'FEEDLINE' layer. The default is None.
-        focal_plane_dxf : string, optional
-            The path to a .dxf file with the focal plane useful area drawing. 
-            The drawing must be placed on the 'FOCAL_PLANE' layer. The default 
-            is None.
-        wafer_limits : string, optional
+        wafer_dxf : string, optional
             The path to a .dxf file with the wafer perimeter drawing. 
             The drawing must be placed on the 'WAFER_LIMIT' layer. The default 
             is None.
@@ -76,16 +72,9 @@ class Array():
             importer.import_modelspace()
             importer.finalize()
             
-        # import the focal plane useful area drawing if given
-        if focal_plane_dxf != None:
-            focal_plane = ezdxf.readfile(focal_plane_dxf)
-            importer = Importer(focal_plane, self.array_dxf)
-            importer.import_modelspace()
-            importer.finalize()
-            
         # import the wafer limit perimeter
-        if wafer_limits != None:
-            wafer = ezdxf.readfile(wafer_limits)
+        if wafer_dxf != None:
+            wafer = ezdxf.readfile(wafer_dxf)
             importer = Importer(wafer, self.array_dxf)
             importer.import_modelspace()
             importer.finalize()
