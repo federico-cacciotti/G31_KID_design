@@ -421,3 +421,4 @@ class HilbertLShape():
         backend = MatplotlibBackend(ax)
         Frontend(RenderContext(self.dxf), backend).draw_layout(self.msp)
         fig.savefig(filename, dpi=dpi)
+        plt.show()

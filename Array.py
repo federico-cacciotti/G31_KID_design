@@ -132,3 +132,4 @@ class Array():
         backend = MatplotlibBackend(ax)
         Frontend(RenderContext(self.array_dxf), backend).draw_layout(self.array_dxf.modelspace())
         fig.savefig(filename, dpi=dpi)
+        plt.show()
