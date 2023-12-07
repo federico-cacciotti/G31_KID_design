@@ -1,5 +1,6 @@
 from . HilbertLShape import *
 from . HilbertIShape import *
+from . DualPolCross import *
 from . Array import *
 from . functions import *
 

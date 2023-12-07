@@ -88,13 +88,13 @@ class Array():
                 # entity is the textual index
                 if not type(entity) == ezdxf.entities.text.Text:
                     # mirroring
-                    if self.mirror != None:
+                    if np.any(self.mirror != None):
                         if self.mirror[i] == 'x':
                             entity.transform(ezdxf.math.Matrix44.scale(sx=-1, sy=1, sz=1))
                         if self.mirror[i] == 'y':
                             entity.transform(ezdxf.math.Matrix44.scale(sx=1, sy=-1, sz=1))
                     # rotation
-                    if self.rotation != None:
+                    if np.any(self.rotation != None):
                         entity.transform(ezdxf.math.Matrix44.z_rotate(np.radians(self.rotation[i])))
                 # translation
                 entity.transform(ezdxf.math.Matrix44.translate(self.x_pos[i], self.y_pos[i], 0.0))
