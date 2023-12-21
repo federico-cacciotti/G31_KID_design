@@ -19,8 +19,8 @@ from . import functions as fc
 class DualPolCross():
     def __init__(self, index, h, l, d, w, capacitor_connector_w, capacitor_connector_h, capacitor_finger_number_v, capacitor_finger_number_h, 
                  capacitor_finger_width, capacitor_finger_gap, coupling_capacitor_v_length, coupling_capacitor_h_length, coupling_capacitor_w, 
-                 coupling_capacitor_connector_h, absorber_choke_d, absorber_choke_h, absorber_choke_s, absorber_choke_w, capacitor_finger_extra_end_gap=0.0,
-                 capacitor_size=0.0):
+                 coupling_capacitor_connector_h, absorber_choke_d, absorber_choke_h, absorber_choke_s, absorber_choke_w, capacitor_offset,
+                 capacitor_finger_extra_end_gap=0.0, capacitor_size=0.0):
 
         self.index = index
         self.h = h
@@ -42,12 +42,13 @@ class DualPolCross():
         self.absorber_choke_s = absorber_choke_s
         self.absorber_choke_w = absorber_choke_w
         self.capacitor_finger_extra_end_gap = capacitor_finger_extra_end_gap
+        self.capacitor_offset = capacitor_offset
         # hidden parameters
         if capacitor_size == 0.0:
             self.capacitor_size = (self.l*0.5+self.absorber_choke_d+2.0*self.absorber_choke_w+self.absorber_choke_s)*2.0
         else:
             self.capacitor_size = capacitor_size
-        self.capacitor_s = 50.0
+        self.capacitor_s = 10.0
         self.capacitor_finger_length = self.capacitor_size - self.capacitor_finger_gap - 2.0*self.capacitor_connector_w - self.capacitor_finger_extra_end_gap
         self.coupling_capacitor_connector_w = 20.0
 
@@ -232,94 +233,82 @@ class DualPolCross():
     
     # draws the interdigital capacitor
     def __draw_capacitor_v(self):
-        polygons = []
-
         finger_number_int = int(self.capacitor_finger_number_v)
         capacitor_vertical_width = finger_number_int*self.capacitor_finger_width+(finger_number_int-1)*self.capacitor_finger_gap
         # draw fingers
         y_shift = -self.l*0.5-self.absorber_choke_d-self.absorber_choke_s-2.0*self.absorber_choke_w-self.capacitor_connector_h-self.capacitor_s-self.capacitor_finger_width
         x_shift = -self.capacitor_size*0.5+self.capacitor_connector_w
         for i in range(finger_number_int):
-            corner0 = (((i+1)%2)*(self.capacitor_finger_gap+self.capacitor_finger_extra_end_gap) + x_shift, -i*(self.capacitor_finger_width+self.capacitor_finger_gap) + y_shift)
+            corner0 = (((i+1)%2)*(self.capacitor_finger_gap+self.capacitor_finger_extra_end_gap) + x_shift-self.capacitor_offset, -i*(self.capacitor_finger_width+self.capacitor_finger_gap) + y_shift)
             y_size = self.capacitor_finger_width
             x_size = self.capacitor_finger_length
             self.msp.add_lwpolyline(fc.draw_rectangle_corner_dimensions_points(corner0, x_size, y_size), close=True, dxfattribs={"layer": self.pixel_layer_name})
-            #polygons.append(fc.draw_rectangle_corner_dimensions(corner0, x_size, y_size))
 
         # connectors
         A = np.array([-self.absorber_choke_h*0.5, -self.l*0.5-self.absorber_choke_d-self.absorber_choke_s-2.0*self.absorber_choke_w-self.capacitor_connector_h])
-        B = np.array([-self.capacitor_size*0.5, -self.l*0.5-self.absorber_choke_d-self.absorber_choke_s-2.0*self.absorber_choke_w-self.capacitor_connector_h])
-        C = np.array([-self.capacitor_size*0.5, -self.l*0.5-self.absorber_choke_d-self.absorber_choke_s-2.0*self.absorber_choke_w-self.capacitor_connector_h-self.capacitor_s-capacitor_vertical_width])
-        D = np.array([-self.capacitor_size*0.5+self.capacitor_connector_w, -self.l*0.5-self.absorber_choke_d-self.absorber_choke_s-2.0*self.absorber_choke_w-self.capacitor_connector_h-self.capacitor_s-capacitor_vertical_width])
-        E = np.array([-self.capacitor_size*0.5+self.capacitor_connector_w, -self.l*0.5-self.absorber_choke_d-self.absorber_choke_s-2.0*self.absorber_choke_w-self.capacitor_connector_h-self.capacitor_connector_w])
+        B = np.array([-self.capacitor_size*0.5-self.capacitor_offset, -self.l*0.5-self.absorber_choke_d-self.absorber_choke_s-2.0*self.absorber_choke_w-self.capacitor_connector_h])
+        C = np.array([-self.capacitor_size*0.5-self.capacitor_offset, -self.l*0.5-self.absorber_choke_d-self.absorber_choke_s-2.0*self.absorber_choke_w-self.capacitor_connector_h-self.capacitor_s-capacitor_vertical_width])
+        D = np.array([-self.capacitor_size*0.5+self.capacitor_connector_w-self.capacitor_offset, -self.l*0.5-self.absorber_choke_d-self.absorber_choke_s-2.0*self.absorber_choke_w-self.capacitor_connector_h-self.capacitor_s-capacitor_vertical_width])
+        E = np.array([-self.capacitor_size*0.5+self.capacitor_connector_w-self.capacitor_offset, -self.l*0.5-self.absorber_choke_d-self.absorber_choke_s-2.0*self.absorber_choke_w-self.capacitor_connector_h-self.capacitor_connector_w])
         F = np.array([-self.absorber_choke_h*0.5, -self.l*0.5-self.absorber_choke_d-self.absorber_choke_s-2.0*self.absorber_choke_w-self.capacitor_connector_h-self.capacitor_connector_w])
         points = (A, B, C, D, E, F)
-        #polygons.append(Polygon(points))
         self.msp.add_lwpolyline(points, close=True, dxfattribs={"layer": self.pixel_layer_name})
 
         # connectors
         A = np.array([self.absorber_choke_h*0.5, -self.l*0.5-self.absorber_choke_d-self.absorber_choke_s-2.0*self.absorber_choke_w-self.capacitor_connector_h])
-        B = np.array([self.capacitor_size*0.5, -self.l*0.5-self.absorber_choke_d-self.absorber_choke_s-2.0*self.absorber_choke_w-self.capacitor_connector_h])
-        C = np.array([self.capacitor_size*0.5, -self.l*0.5-self.absorber_choke_d-self.absorber_choke_s-2.0*self.absorber_choke_w-self.capacitor_connector_h-self.capacitor_s-capacitor_vertical_width])
-        D = np.array([self.capacitor_size*0.5-self.capacitor_connector_w, -self.l*0.5-self.absorber_choke_d-self.absorber_choke_s-2.0*self.absorber_choke_w-self.capacitor_connector_h-self.capacitor_s-capacitor_vertical_width])
-        E = np.array([self.capacitor_size*0.5-self.capacitor_connector_w, -self.l*0.5-self.absorber_choke_d-self.absorber_choke_s-2.0*self.absorber_choke_w-self.capacitor_connector_h-self.capacitor_connector_w])
+        B = np.array([self.capacitor_size*0.5-self.capacitor_offset, -self.l*0.5-self.absorber_choke_d-self.absorber_choke_s-2.0*self.absorber_choke_w-self.capacitor_connector_h])
+        C = np.array([self.capacitor_size*0.5-self.capacitor_offset, -self.l*0.5-self.absorber_choke_d-self.absorber_choke_s-2.0*self.absorber_choke_w-self.capacitor_connector_h-self.capacitor_s-capacitor_vertical_width])
+        D = np.array([self.capacitor_size*0.5-self.capacitor_offset-self.capacitor_connector_w, -self.l*0.5-self.absorber_choke_d-self.absorber_choke_s-2.0*self.absorber_choke_w-self.capacitor_connector_h-self.capacitor_s-capacitor_vertical_width])
+        E = np.array([self.capacitor_size*0.5-self.capacitor_connector_w-self.capacitor_offset, -self.l*0.5-self.absorber_choke_d-self.absorber_choke_s-2.0*self.absorber_choke_w-self.capacitor_connector_h-self.capacitor_connector_w])
         F = np.array([self.absorber_choke_h*0.5, -self.l*0.5-self.absorber_choke_d-self.absorber_choke_s-2.0*self.absorber_choke_w-self.capacitor_connector_h-self.capacitor_connector_w])
         points = (A, B, C, D, E, F)
-        #polygons.append(Polygon(points))
         self.msp.add_lwpolyline(points, close=True, dxfattribs={"layer": self.pixel_layer_name})
 
         # pinky finger
         if self.capacitor_finger_number_v-finger_number_int != 0.0:
             pinky_length = self.capacitor_finger_length*(self.capacitor_finger_number_v-finger_number_int)
-            corner0 = (x_shift, y_shift+self.capacitor_finger_width+self.capacitor_finger_gap)
+            corner0 = (x_shift-self.capacitor_offset, y_shift+self.capacitor_finger_width+self.capacitor_finger_gap)
             y_size = self.capacitor_finger_width
             x_size = pinky_length
             self.msp.add_lwpolyline(fc.draw_rectangle_corner_dimensions_points(corner0, x_size, y_size), close=True, dxfattribs={"layer": self.pixel_layer_name})
 
-        
-
     # draws the interdigital capacitor
     def __draw_capacitor_h(self):
-        polygons = []
-
         finger_number_int = int(self.capacitor_finger_number_h)
         capacitor_vertical_width = finger_number_int*self.capacitor_finger_width+(finger_number_int-1)*self.capacitor_finger_gap
         # draw fingers
         y_shift = self.l*0.5+self.absorber_choke_d+self.absorber_choke_s+2.0*self.absorber_choke_w+self.capacitor_connector_h+self.capacitor_s
         x_shift = -self.capacitor_size*0.5+self.capacitor_connector_w
         for i in range(finger_number_int):
-            corner0 = (((i)%2)*(self.capacitor_finger_gap+self.capacitor_finger_extra_end_gap) + x_shift, i*(self.capacitor_finger_width+self.capacitor_finger_gap) + y_shift)
+            corner0 = (((i)%2)*(self.capacitor_finger_gap+self.capacitor_finger_extra_end_gap) + x_shift-self.capacitor_offset, i*(self.capacitor_finger_width+self.capacitor_finger_gap) + y_shift)
             y_size = self.capacitor_finger_width
             x_size = self.capacitor_finger_length
             self.msp.add_lwpolyline(fc.draw_rectangle_corner_dimensions_points(corner0, x_size, y_size), close=True, dxfattribs={"layer": self.pixel_layer_name})
-            #polygons.append(fc.draw_rectangle_corner_dimensions(corner0, x_size, y_size))
 
         # connectors
         A = np.array([-self.absorber_choke_h*0.5, -(-self.l*0.5-self.absorber_choke_d-self.absorber_choke_s-2.0*self.absorber_choke_w-self.capacitor_connector_h)])
-        B = np.array([-self.capacitor_size*0.5, -(-self.l*0.5-self.absorber_choke_d-self.absorber_choke_s-2.0*self.absorber_choke_w-self.capacitor_connector_h)])
-        C = np.array([-self.capacitor_size*0.5, -(-self.l*0.5-self.absorber_choke_d-self.absorber_choke_s-2.0*self.absorber_choke_w-self.capacitor_connector_h-self.capacitor_s-capacitor_vertical_width)])
-        D = np.array([-self.capacitor_size*0.5+self.capacitor_connector_w, -(-self.l*0.5-self.absorber_choke_d-self.absorber_choke_s-2.0*self.absorber_choke_w-self.capacitor_connector_h-self.capacitor_s-capacitor_vertical_width)])
-        E = np.array([-self.capacitor_size*0.5+self.capacitor_connector_w, -(-self.l*0.5-self.absorber_choke_d-self.absorber_choke_s-2.0*self.absorber_choke_w-self.capacitor_connector_h-self.capacitor_connector_w)])
+        B = np.array([-self.capacitor_size*0.5-self.capacitor_offset, -(-self.l*0.5-self.absorber_choke_d-self.absorber_choke_s-2.0*self.absorber_choke_w-self.capacitor_connector_h)])
+        C = np.array([-self.capacitor_size*0.5-self.capacitor_offset, -(-self.l*0.5-self.absorber_choke_d-self.absorber_choke_s-2.0*self.absorber_choke_w-self.capacitor_connector_h-self.capacitor_s-capacitor_vertical_width)])
+        D = np.array([-self.capacitor_size*0.5+self.capacitor_connector_w-self.capacitor_offset, -(-self.l*0.5-self.absorber_choke_d-self.absorber_choke_s-2.0*self.absorber_choke_w-self.capacitor_connector_h-self.capacitor_s-capacitor_vertical_width)])
+        E = np.array([-self.capacitor_size*0.5+self.capacitor_connector_w-self.capacitor_offset, -(-self.l*0.5-self.absorber_choke_d-self.absorber_choke_s-2.0*self.absorber_choke_w-self.capacitor_connector_h-self.capacitor_connector_w)])
         F = np.array([-self.absorber_choke_h*0.5, -(-self.l*0.5-self.absorber_choke_d-self.absorber_choke_s-2.0*self.absorber_choke_w-self.capacitor_connector_h-self.capacitor_connector_w)])
         points = (A, B, C, D, E, F)
-        #polygons.append(Polygon(points))
         self.msp.add_lwpolyline(points, close=True, dxfattribs={"layer": self.pixel_layer_name})
 
         # connectors
         A = np.array([self.absorber_choke_h*0.5, -(-self.l*0.5-self.absorber_choke_d-self.absorber_choke_s-2.0*self.absorber_choke_w-self.capacitor_connector_h)])
-        B = np.array([self.capacitor_size*0.5, -(-self.l*0.5-self.absorber_choke_d-self.absorber_choke_s-2.0*self.absorber_choke_w-self.capacitor_connector_h)])
-        C = np.array([self.capacitor_size*0.5, -(-self.l*0.5-self.absorber_choke_d-self.absorber_choke_s-2.0*self.absorber_choke_w-self.capacitor_connector_h-self.capacitor_s-capacitor_vertical_width)])
-        D = np.array([self.capacitor_size*0.5-self.capacitor_connector_w, -(-self.l*0.5-self.absorber_choke_d-self.absorber_choke_s-2.0*self.absorber_choke_w-self.capacitor_connector_h-self.capacitor_s-capacitor_vertical_width)])
-        E = np.array([self.capacitor_size*0.5-self.capacitor_connector_w, -(-self.l*0.5-self.absorber_choke_d-self.absorber_choke_s-2.0*self.absorber_choke_w-self.capacitor_connector_h-self.capacitor_connector_w)])
+        B = np.array([self.capacitor_size*0.5-self.capacitor_offset, -(-self.l*0.5-self.absorber_choke_d-self.absorber_choke_s-2.0*self.absorber_choke_w-self.capacitor_connector_h)])
+        C = np.array([self.capacitor_size*0.5-self.capacitor_offset, -(-self.l*0.5-self.absorber_choke_d-self.absorber_choke_s-2.0*self.absorber_choke_w-self.capacitor_connector_h-self.capacitor_s-capacitor_vertical_width)])
+        D = np.array([self.capacitor_size*0.5-self.capacitor_connector_w-self.capacitor_offset, -(-self.l*0.5-self.absorber_choke_d-self.absorber_choke_s-2.0*self.absorber_choke_w-self.capacitor_connector_h-self.capacitor_s-capacitor_vertical_width)])
+        E = np.array([self.capacitor_size*0.5-self.capacitor_connector_w-self.capacitor_offset, -(-self.l*0.5-self.absorber_choke_d-self.absorber_choke_s-2.0*self.absorber_choke_w-self.capacitor_connector_h-self.capacitor_connector_w)])
         F = np.array([self.absorber_choke_h*0.5, -(-self.l*0.5-self.absorber_choke_d-self.absorber_choke_s-2.0*self.absorber_choke_w-self.capacitor_connector_h-self.capacitor_connector_w)])
         points = (A, B, C, D, E, F)
-        #polygons.append(Polygon(points))
         self.msp.add_lwpolyline(points, close=True, dxfattribs={"layer": self.pixel_layer_name})
 
         # pinky finger
         if self.capacitor_finger_number_h-finger_number_int != 0.0:
             pinky_length = self.capacitor_finger_length*(self.capacitor_finger_number_h-finger_number_int)
-            corner0 = (x_shift+self.capacitor_finger_length+self.capacitor_finger_gap+self.capacitor_finger_extra_end_gap, y_shift-self.capacitor_finger_width-self.capacitor_finger_gap)
+            corner0 = (x_shift+self.capacitor_finger_length+self.capacitor_finger_gap+self.capacitor_finger_extra_end_gap-self.capacitor_offset, y_shift-self.capacitor_finger_width-self.capacitor_finger_gap)
             y_size = self.capacitor_finger_width
             x_size = -pinky_length
             self.msp.add_lwpolyline(fc.draw_rectangle_corner_dimensions_points(corner0, x_size, y_size), close=True, dxfattribs={"layer": self.pixel_layer_name})
@@ -327,8 +316,8 @@ class DualPolCross():
     def __draw_coupling_capacitor_v(self):
         finger_number_int = int(self.capacitor_finger_number_v)
         capacitor_vertical_width = finger_number_int*self.capacitor_finger_width+(finger_number_int-1)*self.capacitor_finger_gap
-        A = np.array([self.capacitor_size*0.5, -self.l*0.5-self.absorber_choke_d-self.absorber_choke_s-2.0*self.absorber_choke_w-self.capacitor_connector_h-self.capacitor_s-capacitor_vertical_width])
-        B = np.array([A[0]+self.coupling_capacitor_connector_h+self.coupling_capacitor_w, A[1]])
+        A = np.array([self.capacitor_size*0.5-self.capacitor_offset, -self.l*0.5-self.absorber_choke_d-self.absorber_choke_s-2.0*self.absorber_choke_w-self.capacitor_connector_h-self.capacitor_s-capacitor_vertical_width])
+        B = np.array([A[0]+self.coupling_capacitor_connector_h+self.coupling_capacitor_w+self.capacitor_offset, A[1]])
         C = np.array([B[0], B[1]+self.coupling_capacitor_v_length])
         D = np.array([C[0]-self.coupling_capacitor_w, C[1]])
         E = np.array([D[0], D[1]-self.coupling_capacitor_v_length+self.coupling_capacitor_connector_w])
@@ -339,8 +328,8 @@ class DualPolCross():
     def __draw_coupling_capacitor_h(self):
         finger_number_int = int(self.capacitor_finger_number_h)
         capacitor_vertical_width = finger_number_int*self.capacitor_finger_width+(finger_number_int-1)*self.capacitor_finger_gap
-        A = np.array([self.capacitor_size*0.5, -(-self.l*0.5-self.absorber_choke_d-self.absorber_choke_s-2.0*self.absorber_choke_w-self.capacitor_connector_h-self.capacitor_s-capacitor_vertical_width)])
-        B = np.array([A[0]+self.coupling_capacitor_connector_h+self.coupling_capacitor_w, A[1]])
+        A = np.array([self.capacitor_size*0.5-self.capacitor_offset, -(-self.l*0.5-self.absorber_choke_d-self.absorber_choke_s-2.0*self.absorber_choke_w-self.capacitor_connector_h-self.capacitor_s-capacitor_vertical_width)])
+        B = np.array([A[0]+self.coupling_capacitor_connector_h+self.coupling_capacitor_w+self.capacitor_offset, A[1]])
         C = np.array([B[0], B[1]-self.coupling_capacitor_h_length])
         D = np.array([C[0]-self.coupling_capacitor_w, C[1]])
         E = np.array([D[0], D[1]+self.coupling_capacitor_h_length-self.coupling_capacitor_connector_w])
