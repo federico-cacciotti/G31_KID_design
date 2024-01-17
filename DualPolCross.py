@@ -52,6 +52,12 @@ class DualPolCross():
         self.capacitor_finger_length = self.capacitor_size - self.capacitor_finger_gap - 2.0*self.capacitor_connector_w - self.capacitor_finger_extra_end_gap
         self.coupling_capacitor_connector_w = 20.0
 
+        # the four radii r1 > r2 > r3 > r4 for trigonometric corrections
+        self.r1 = self.l*0.5+self.absorber_choke_d+self.absorber_choke_s+2.0*self.absorber_choke_w
+        self.r2 = self.r1 - self.absorber_choke_w
+        self.r3 = self.r2 - self.absorber_choke_s
+        self.r4 = self.r3 - self.absorber_choke_w
+
         self.info_string = ("units: microns\n"
                                 "index:                       {:d}\n"
                                 "h:                           {:.2f}\n"
@@ -68,12 +74,14 @@ class DualPolCross():
         self.dxf = ezdxf.new('R2018', setup=True)
         # layer names
         self.pixel_layer_name = "PIXEL"
+        self.choke_layer_name = "CHOKE"
         self.center_layer_name = "CENTER"
         self.pixel_area_layer_name = "PIXEL_AREA"
         self.absorber_area_layer_name = "ABSORBER_AREA"
         self.index_layer_name = "INDEX"
         # layer colors - AutoCAD Color Index - table on http://gohtx.com/acadcolors.php
         self.pixel_layer_color = 255
+        self.choke_layer_color = 3
         self.pixel_area_layer_color = 140
         self.absorber_area_layer_color = 150
         self.center_layer_color = 120
@@ -81,6 +89,7 @@ class DualPolCross():
 
         # adds layers
         self.dxf.layers.add(name=self.pixel_layer_name, color=self.pixel_layer_color)
+        self.dxf.layers.add(name=self.choke_layer_name, color=self.choke_layer_color)
         self.dxf.layers.add(name=self.center_layer_name, color=self.center_layer_color)
         self.dxf.layers.add(name=self.pixel_area_layer_name, color=self.pixel_area_layer_color)
         self.dxf.layers.add(name=self.absorber_area_layer_name, color=self.absorber_area_layer_color)
@@ -115,53 +124,48 @@ class DualPolCross():
 
     def __draw_absorber_v(self):
         # vertical polarization absorber
-        points = ((-self.h*0.5-self.w, -self.l*0.5),
+        points = ((-self.h*0.5-self.w, -np.sqrt(self.r4**2.0-(self.h*0.5+self.w)**2.0)),
                     (-self.h*0.5-self.w, self.l*0.5),
                     (self.h*0.5+self.w, self.l*0.5),
-                    (self.h*0.5+self.w, -self.l*0.5),
-                    (self.h*0.5, -self.l*0.5),
+                    (self.h*0.5+self.w, -np.sqrt(self.r4**2.0-(self.h*0.5+self.w)**2.0)),
+                    (self.h*0.5, -np.sqrt(self.r4**2.0-(self.h*0.5+self.w)**2.0)),
                     (self.h*0.5, self.l*0.5-self.w),
                     (-self.h*0.5, self.l*0.5-self.w),
-                    (-self.h*0.5, -self.l*0.5))
+                    (-self.h*0.5, -np.sqrt(self.r4**2.0-(self.h*0.5+self.w)**2.0)))
         self.msp.add_lwpolyline(points, close=True, dxfattribs={"layer": self.pixel_layer_name})
 
     def __draw_absorber_h(self):
         # left horizontal polarization absorber
-        points = ((-self.l*0.5, -self.h*0.5-self.w),
+        points = ((-np.sqrt(self.r2**2.0-(self.h*0.5)**2.0), -self.h*0.5-self.w),
                   (-self.d-self.h*0.5-self.w, -self.h*0.5-self.w),
                   (-self.d-self.h*0.5-self.w, self.h*0.5+self.w),
-                  (-self.l*0.5, self.h*0.5+self.w),
-                  (-self.l*0.5, self.h*0.5),
+                  (-np.sqrt(self.r4**2.0-(self.h*0.5+self.w)**2.0), self.h*0.5+self.w),
+                  (-np.sqrt(self.r4**2.0-(self.h*0.5+self.w)**2.0), self.h*0.5),
                   (-self.d-self.h*0.5-2.0*self.w, self.h*0.5),
                   (-self.d-self.h*0.5-2.0*self.w, -self.h*0.5),
-                  (-self.l*0.5, -self.h*0.5))
+                  (-np.sqrt(self.r2**2.0-(self.h*0.5)**2.0), -self.h*0.5))
         self.msp.add_lwpolyline(points, close=True, dxfattribs={"layer": self.pixel_layer_name})
 
         # right horizontal polarization absorber
-        points = ((self.l*0.5, -self.h*0.5-self.w),
+        points = ((np.sqrt(self.r2**2.0-(self.h*0.5)**2.0), -self.h*0.5-self.w),
                   (self.d+self.h*0.5+self.w, -self.h*0.5-self.w),
                   (self.d+self.h*0.5+self.w, self.h*0.5+self.w),
-                  (self.l*0.5, self.h*0.5+self.w),
-                  (self.l*0.5, self.h*0.5),
+                  (np.sqrt(self.r4**2.0-(self.h*0.5+self.w)**2.0), self.h*0.5+self.w),
+                  (np.sqrt(self.r4**2.0-(self.h*0.5+self.w)**2.0), self.h*0.5),
                   (self.d+self.h*0.5+2.0*self.w, self.h*0.5),
                   (self.d+self.h*0.5+2.0*self.w, -self.h*0.5),
-                  (self.l*0.5, -self.h*0.5))
+                  (np.sqrt(self.r2**2.0-(self.h*0.5)**2.0), -self.h*0.5))
         self.msp.add_lwpolyline(points, close=True, dxfattribs={"layer": self.pixel_layer_name})
 
 
     # draws the capacitor connectors
     def __draw_capacitor_connetor(self):
-        # the four radii r1 > r2 > r3 > r4 for trigonometric corrections
-        r1 = self.l*0.5+self.absorber_choke_d+self.absorber_choke_s+2.0*self.absorber_choke_w
-        r2 = r1 - self.absorber_choke_w
-        r3 = r2 - self.absorber_choke_s
-        r4 = r3 - self.absorber_choke_w
-
         # this function computes the bulge parameter for circular section polylines
         def bulge(A, B):
             return 2.0/np.linalg.norm(A-B) * (np.linalg.norm(A) - np.sqrt(np.linalg.norm(A)**2.0-0.25*np.linalg.norm(A-B)**2.0))
         
-        # quarter choke (bottom left)
+        # quarter choke (bottom left) # OK
+        '''
         A = np.array([-self.absorber_choke_h*0.5, -self.l*0.5-self.absorber_choke_d-self.absorber_choke_s-2.0*self.absorber_choke_w-self.capacitor_connector_h])
         B = np.array([-self.absorber_choke_h*0.5, -np.sqrt(r2**2.0-(self.absorber_choke_h*0.5)**2.0)])
         C = np.array([-np.sqrt(r2**2.0-(self.h*0.5+self.w+self.absorber_choke_h+self.absorber_choke_w)**2.0), -self.h*0.5-self.w-self.absorber_choke_h-self.absorber_choke_w])
@@ -177,8 +181,23 @@ class DualPolCross():
 
         points = (A, (B[0], B[1], 0.0, 0.0, -bulge(B, C)), C, (D[0], D[1], 0.0, 0.0, bulge(D, E)), E, F, G , 
                   (H[0], H[1], 0.0, 0.0, -bulge(H, I)), I, (J[0], J[1], 0.0, 0.0, bulge(J, K)), K, L)
-        self.msp.add_lwpolyline(points, close=True, dxfattribs={"layer": self.pixel_layer_name})
-        # quarter choke (bottom right)
+        '''
+        A = np.array([-self.absorber_choke_h*0.5, -np.sqrt(self.r2**2.0-(self.absorber_choke_h*0.5)**2.0)])
+        B = np.array([-np.sqrt(self.r2**2.0-(self.h*0.5+self.w+self.absorber_choke_h+self.absorber_choke_w)**2.0), -self.h*0.5-self.w-self.absorber_choke_h-self.absorber_choke_w])
+        C = np.array([-np.sqrt(self.r3**2.0-(self.h*0.5+self.w+self.absorber_choke_h+self.absorber_choke_w)**2.0), -self.h*0.5-self.w-self.absorber_choke_h-self.absorber_choke_w])
+        D = np.array([-self.h*0.5, -np.sqrt(self.r3**2.0-(self.h*0.5)**2.0)])
+        #E = np.array([D[0], D[1]+self.absorber_choke_w])
+        F = np.array([-self.h*0.5-self.w, -np.sqrt(self.r4**2.0-(self.h*0.5+self.w)**2.0)])
+        E = np.array([F[0]+self.w, F[1]])
+        G = np.array([-np.sqrt(self.r4**2.0-(self.h*0.5+self.w+self.absorber_choke_h)**2.0), -self.h*0.5-self.w-self.absorber_choke_h])
+        H = np.array([-np.sqrt(self.r1**2.0-(self.h*0.5+self.w+self.absorber_choke_h)**2.0), -self.h*0.5-self.w-self.absorber_choke_h])
+        I = np.array([-self.absorber_choke_h*0.5-self.capacitor_connector_w, -np.sqrt(self.r1**2.0-(self.absorber_choke_h*0.5+self.capacitor_connector_w)**2.0)])
+        J = np.array([I[0]+self.capacitor_connector_w, I[1]])
+        points = ((A[0], A[1], 0.0, 0.0, -bulge(A, B)), B, (C[0], C[1], 0.0, 0.0, bulge(C, D)), D, E, (F[0], F[1], 0.0, 0.0, -bulge(F, G)), G, (H[0], H[1], 0.0, 0.0, bulge(H, I)), I, J)
+        self.msp.add_lwpolyline(points, close=True, dxfattribs={"layer": self.choke_layer_name})
+
+        # quarter choke (bottom right) # OK
+        '''
         A = np.array([self.absorber_choke_h*0.5, -self.l*0.5-self.absorber_choke_d-self.absorber_choke_s-2.0*self.absorber_choke_w-self.capacitor_connector_h])
         B = np.array([self.absorber_choke_h*0.5, -np.sqrt(r2**2.0-(self.absorber_choke_h*0.5)**2.0)])
         C = np.array([np.sqrt(r2**2.0-(self.h*0.5+self.w+self.absorber_choke_h+self.absorber_choke_w)**2.0), -self.h*0.5-self.w-self.absorber_choke_h-self.absorber_choke_w])
@@ -194,9 +213,23 @@ class DualPolCross():
 
         points = (A, (B[0], B[1], 0.0, 0.0, bulge(B, C)), C, (D[0], D[1], 0.0, 0.0, -bulge(D, E)), E, F, G , 
                   (H[0], H[1], 0.0, 0.0, bulge(H, I)), I, (J[0], J[1], 0.0, 0.0, -bulge(J, K)), K, L)
-        self.msp.add_lwpolyline(points, close=True, dxfattribs={"layer": self.pixel_layer_name})
+        '''
+        A = np.array([self.absorber_choke_h*0.5, -np.sqrt(self.r2**2.0-(self.absorber_choke_h*0.5)**2.0)])
+        B = np.array([np.sqrt(self.r2**2.0-(self.h*0.5+self.w+self.absorber_choke_h+self.absorber_choke_w)**2.0), -self.h*0.5-self.w-self.absorber_choke_h-self.absorber_choke_w])
+        C = np.array([np.sqrt(self.r3**2.0-(self.h*0.5+self.w+self.absorber_choke_h+self.absorber_choke_w)**2.0), -self.h*0.5-self.w-self.absorber_choke_h-self.absorber_choke_w])
+        D = np.array([self.h*0.5, -np.sqrt(self.r3**2.0-(self.h*0.5)**2.0)])
+        #E = np.array([D[0], D[1]+self.absorber_choke_w])
+        F = np.array([self.h*0.5+self.w, -np.sqrt(self.r4**2.0-(self.h*0.5+self.w)**2.0)])
+        E = np.array([F[0]-self.w, F[1]])
+        G = np.array([np.sqrt(self.r4**2.0-(self.h*0.5+self.w+self.absorber_choke_h)**2.0), -self.h*0.5-self.w-self.absorber_choke_h])
+        H = np.array([np.sqrt(self.r1**2.0-(self.h*0.5+self.w+self.absorber_choke_h)**2.0), -self.h*0.5-self.w-self.absorber_choke_h])
+        I = np.array([self.absorber_choke_h*0.5+self.capacitor_connector_w, -np.sqrt(self.r1**2.0-(self.absorber_choke_h*0.5+self.capacitor_connector_w)**2.0)])
+        J = np.array([I[0]-self.capacitor_connector_w, I[1]])
+        points = ((A[0], A[1], 0.0, 0.0, bulge(A, B)), B, (C[0], C[1], 0.0, 0.0, -bulge(C, D)), D, E, (F[0], F[1], 0.0, 0.0, bulge(F, G)), G, (H[0], H[1], 0.0, 0.0, -bulge(H, I)), I, J)
+        self.msp.add_lwpolyline(points, close=True, dxfattribs={"layer": self.choke_layer_name})
 
-        # half choke (top)
+        # half choke (top) # OK
+        '''
         A = np.array([-self.l*0.5, self.h*0.5])
         B = np.array([-np.sqrt(r3**2.0-(self.h*0.5)**2.0), self.h*0.5])
         C = np.array([np.sqrt(r3**2.0-(self.h*0.5)**2.0), self.h*0.5])
@@ -206,8 +239,19 @@ class DualPolCross():
         G = np.array([-np.sqrt(r4**2.0-(self.h*0.5+self.w)**2.0), self.h*0.5+self.w])
         H = np.array([-self.l*0.5, self.h*0.5+self.w])
         points = (A, (B[0], B[1], 0.0, 0.0, -bulge(B, C)), C, D, E, (F[0], F[1], 0.0, 0.0, bulge(F, G)), G, H)
-        self.msp.add_lwpolyline(points, close=True, dxfattribs={"layer": self.pixel_layer_name})
-        # quarter choke (top left)
+        '''
+        A = np.array([-np.sqrt(self.r3**2.0-(self.h*0.5)**2.0), self.h*0.5])
+        B = np.array([-A[0], A[1]])
+        D = np.array([np.sqrt(self.r4**2.0-(self.h*0.5+self.w)**2.0), self.h*0.5+self.w])
+        C = np.array([D[0], D[1]-self.w])
+        #D = np.array([C[0], C[1]+self.w])
+        E = np.array([-D[0], D[1]])
+        F = np.array([-C[0], C[1]])
+        points = ((A[0], A[1], 0.0, 0.0, -bulge(A, B)), B, C, (D[0], D[1], 0.0, 0.0, bulge(D, E)), E, F)
+        self.msp.add_lwpolyline(points, close=True, dxfattribs={"layer": self.choke_layer_name})
+
+        # quarter choke (top left) # OK
+        '''
         A = np.array([-self.l*0.5, -self.h*0.5])
         B = np.array([-np.sqrt(r2**2.0-(self.h*0.5)**2.0), -self.h*0.5])
         C = np.array([-self.absorber_choke_h*0.5, np.sqrt(r2**2.0-(self.absorber_choke_h*0.5)**2.0)])
@@ -217,8 +261,19 @@ class DualPolCross():
         G = np.array([-np.sqrt(r1**2.0-(self.h*0.5+self.w)**2.0), -self.h*0.5-self.w])
         H = np.array([-self.l*0.5, -self.h*0.5-self.w])
         points = (A, (B[0], B[1], 0.0, 0.0, -bulge(B, C)), C, D, E, (F[0], F[1], 0.0, 0.0, bulge(F, G)), G, H)
-        self.msp.add_lwpolyline(points, close=True, dxfattribs={"layer": self.pixel_layer_name})
+        '''
+        A = np.array([-np.sqrt(self.r2**2.0-(self.h*0.5)**2.0), -self.h*0.5])
+        B = np.array([-self.absorber_choke_h*0.5, np.sqrt(self.r2**2.0-(self.absorber_choke_h*0.5)**2.0)])
+        #C = np.array([B[0], B[1]+self.absorber_choke_w])
+        D = np.array([-self.absorber_choke_h*0.5-self.capacitor_connector_w, np.sqrt(self.r1**2.0-(self.absorber_choke_h*0.5+self.capacitor_connector_w)**2.0)])
+        C = np.array([D[0]+self.capacitor_connector_w, D[1]])
+        E = np.array([-np.sqrt(self.r1**2.0-(self.h*0.5+self.w)**2.0), -self.h*0.5-self.w])
+        F = np.array([A[0], A[1]-self.w])
+        points = ((A[0], A[1], 0.0, 0.0, -bulge(A, B)), B, C, (D[0], D[1], 0.0, 0.0, bulge(D, E)), E, F)
+        self.msp.add_lwpolyline(points, close=True, dxfattribs={"layer": self.choke_layer_name})
+
         # quarter choke (top right)
+        '''
         A = np.array([self.l*0.5, -self.h*0.5])
         B = np.array([np.sqrt(r2**2.0-(self.h*0.5)**2.0), -self.h*0.5])
         C = np.array([self.absorber_choke_h*0.5, np.sqrt(r2**2.0-(self.absorber_choke_h*0.5)**2.0)])
@@ -228,7 +283,16 @@ class DualPolCross():
         G = np.array([np.sqrt(r1**2.0-(self.h*0.5+self.w)**2.0), -self.h*0.5-self.w])
         H = np.array([self.l*0.5, -self.h*0.5-self.w])
         points = (A, (B[0], B[1], 0.0, 0.0, bulge(B, C)), C, D, E, (F[0], F[1], 0.0, 0.0, -bulge(F, G)), G, H)
-        self.msp.add_lwpolyline(points, close=True, dxfattribs={"layer": self.pixel_layer_name})
+        '''
+        A = np.array([np.sqrt(self.r2**2.0-(self.h*0.5)**2.0), -self.h*0.5])
+        B = np.array([self.absorber_choke_h*0.5, np.sqrt(self.r2**2.0-(self.absorber_choke_h*0.5)**2.0)])
+        #C = np.array([B[0], B[1]+self.absorber_choke_w])
+        D = np.array([self.absorber_choke_h*0.5+self.capacitor_connector_w, np.sqrt(self.r1**2.0-(self.absorber_choke_h*0.5+self.capacitor_connector_w)**2.0)])
+        C = np.array([D[0]-self.capacitor_connector_w, D[1]])
+        E = np.array([np.sqrt(self.r1**2.0-(self.h*0.5+self.w)**2.0), -self.h*0.5-self.w])
+        F = np.array([A[0], A[1]-self.w])
+        points = ((A[0], A[1], 0.0, 0.0, bulge(A, B)), B, C, (D[0], D[1], 0.0, 0.0, -bulge(D, E)), E, F)
+        self.msp.add_lwpolyline(points, close=True, dxfattribs={"layer": self.choke_layer_name})
     
     
     # draws the interdigital capacitor
