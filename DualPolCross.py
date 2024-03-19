@@ -118,9 +118,9 @@ class DualPolCross():
         self.__draw_capacitor_h()
         self.__draw_coupling_capacitor_v()
         self.__draw_coupling_capacitor_h()
-        self.__draw_center()
-        self.__draw_index()
-        self.__draw_absorber_area()
+        #self.__draw_center()
+        #self.__draw_index()
+        #self.__draw_absorber_area()
 
         '''
         # merge all the polygons of the pixel layer and draw a single polyline
@@ -398,8 +398,9 @@ class DualPolCross():
             corner0 = (x_shift+self.capacitor_finger_length+self.capacitor_finger_gap+self.capacitor_finger_extra_end_gap-self.capacitor_offset+2.0*self.capacitor_connector_w, y_shift-self.capacitor_finger_width-self.capacitor_finger_gap)
             y_size = self.capacitor_finger_width
             x_size = -pinky_length-self.capacitor_connector_w
-            self.msp.add_lwpolyline(fc.draw_rectangle_corner_dimensions_points(corner0, x_size, y_size), close=True, dxfattribs={"layer": self.capacitor_layer_name})
+            polygons.append(Polygon(fc.draw_rectangle_corner_dimensions_points(corner0, x_size, y_size)))
 
+        
         # left vertical segment
         A = np.array([-self.capacitor_size*0.5-self.capacitor_offset, -(-self.l*0.5-self.absorber_choke_d-self.absorber_choke_s-2.0*self.absorber_choke_w-self.capacitor_connector_h)+self.capacitor_connector_w])
         B = np.array([-self.capacitor_size*0.5-self.capacitor_offset, -(-self.l*0.5-self.absorber_choke_d-self.absorber_choke_s-2.0*self.absorber_choke_w-self.capacitor_connector_h-self.capacitor_s-capacitor_vertical_width)])
