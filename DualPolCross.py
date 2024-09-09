@@ -43,6 +43,7 @@ class DualPolCross():
         self.absorber_choke_w = absorber_choke_w
         self.capacitor_finger_extra_end_gap = capacitor_finger_extra_end_gap
         self.capacitor_offset = capacitor_offset
+        self.overlap_distance = 5.0 # micron
         # hidden parameters
         if capacitor_size == 0.0:
             self.capacitor_size = (self.l*0.5+self.absorber_choke_d+2.0*self.absorber_choke_w+self.absorber_choke_s)*2.0
@@ -136,60 +137,43 @@ class DualPolCross():
 
     def __draw_absorber_v(self):
         # vertical polarization absorber
-        points = ((-self.h*0.5-self.w, -np.sqrt(self.r4**2.0-(self.h*0.5+self.w)**2.0)),
+        points = ((-self.h*0.5-self.w, -np.sqrt(self.r4**2.0-(self.h*0.5+self.w)**2.0)-self.overlap_distance),
                     (-self.h*0.5-self.w, self.l*0.5),
                     (self.h*0.5+self.w, self.l*0.5),
-                    (self.h*0.5+self.w, -np.sqrt(self.r4**2.0-(self.h*0.5+self.w)**2.0)),
-                    (self.h*0.5, -np.sqrt(self.r4**2.0-(self.h*0.5+self.w)**2.0)),
+                    (self.h*0.5+self.w, -np.sqrt(self.r4**2.0-(self.h*0.5+self.w)**2.0)-self.overlap_distance),
+                    (self.h*0.5, -np.sqrt(self.r4**2.0-(self.h*0.5+self.w)**2.0)-self.overlap_distance),
                     (self.h*0.5, self.l*0.5-self.w),
                     (-self.h*0.5, self.l*0.5-self.w),
-                    (-self.h*0.5, -np.sqrt(self.r4**2.0-(self.h*0.5+self.w)**2.0)))
+                    (-self.h*0.5, -np.sqrt(self.r4**2.0-(self.h*0.5+self.w)**2.0)-self.overlap_distance))
         self.msp.add_lwpolyline(points, close=True, dxfattribs={"layer": self.absorber_layer_name})
 
     def __draw_absorber_h(self):
         # left horizontal polarization absorber
-        points = ((-np.sqrt(self.r2**2.0-(self.h*0.5)**2.0), -self.h*0.5-self.w),
+        points = ((-np.sqrt(self.r2**2.0-(self.h*0.5)**2.0)-self.overlap_distance, -self.h*0.5-self.w),
                   (-self.d-self.h*0.5-self.w, -self.h*0.5-self.w),
                   (-self.d-self.h*0.5-self.w, self.h*0.5+self.w),
-                  (-np.sqrt(self.r4**2.0-(self.h*0.5+self.w)**2.0), self.h*0.5+self.w),
-                  (-np.sqrt(self.r4**2.0-(self.h*0.5+self.w)**2.0), self.h*0.5),
+                  (-np.sqrt(self.r4**2.0-(self.h*0.5+self.w)**2.0)-self.overlap_distance, self.h*0.5+self.w),
+                  (-np.sqrt(self.r4**2.0-(self.h*0.5+self.w)**2.0)-self.overlap_distance, self.h*0.5),
                   (-self.d-self.h*0.5-2.0*self.w, self.h*0.5),
                   (-self.d-self.h*0.5-2.0*self.w, -self.h*0.5),
-                  (-np.sqrt(self.r2**2.0-(self.h*0.5)**2.0), -self.h*0.5))
+                  (-np.sqrt(self.r2**2.0-(self.h*0.5)**2.0)-self.overlap_distance, -self.h*0.5))
         self.msp.add_lwpolyline(points, close=True, dxfattribs={"layer": self.absorber_layer_name})
 
         # right horizontal polarization absorber
-        points = ((np.sqrt(self.r2**2.0-(self.h*0.5)**2.0), -self.h*0.5-self.w),
+        points = ((np.sqrt(self.r2**2.0-(self.h*0.5)**2.0)+self.overlap_distance, -self.h*0.5-self.w),
                   (self.d+self.h*0.5+self.w, -self.h*0.5-self.w),
                   (self.d+self.h*0.5+self.w, self.h*0.5+self.w),
-                  (np.sqrt(self.r4**2.0-(self.h*0.5+self.w)**2.0), self.h*0.5+self.w),
-                  (np.sqrt(self.r4**2.0-(self.h*0.5+self.w)**2.0), self.h*0.5),
+                  (np.sqrt(self.r4**2.0-(self.h*0.5+self.w)**2.0)+self.overlap_distance, self.h*0.5+self.w),
+                  (np.sqrt(self.r4**2.0-(self.h*0.5+self.w)**2.0)+self.overlap_distance, self.h*0.5),
                   (self.d+self.h*0.5+2.0*self.w, self.h*0.5),
                   (self.d+self.h*0.5+2.0*self.w, -self.h*0.5),
-                  (np.sqrt(self.r2**2.0-(self.h*0.5)**2.0), -self.h*0.5))
+                  (np.sqrt(self.r2**2.0-(self.h*0.5)**2.0)+self.overlap_distance, -self.h*0.5))
         self.msp.add_lwpolyline(points, close=True, dxfattribs={"layer": self.absorber_layer_name})
 
 
     # draws the capacitor connectors
     def __draw_capacitor_connetor(self):     
-        # quarter choke (bottom left) # OK
-        '''
-        A = np.array([-self.absorber_choke_h*0.5, -self.l*0.5-self.absorber_choke_d-self.absorber_choke_s-2.0*self.absorber_choke_w-self.capacitor_connector_h])
-        B = np.array([-self.absorber_choke_h*0.5, -np.sqrt(r2**2.0-(self.absorber_choke_h*0.5)**2.0)])
-        C = np.array([-np.sqrt(r2**2.0-(self.h*0.5+self.w+self.absorber_choke_h+self.absorber_choke_w)**2.0), -self.h*0.5-self.w-self.absorber_choke_h-self.absorber_choke_w])
-        D = np.array([-np.sqrt(r3**2.0-(self.h*0.5+self.w+self.absorber_choke_h+self.absorber_choke_w)**2.0), -self.h*0.5-self.w-self.absorber_choke_h-self.absorber_choke_w])
-        E = np.array([-self.h*0.5, -np.sqrt(r3**2.0-(self.h*0.5)**2.0)])
-        F = np.array([-self.h*0.5, -self.l*0.5])
-        G = np.array([-self.h*0.5-self.w, -self.l*0.5])
-        H = np.array([-self.h*0.5-self.w, -np.sqrt(r4**2.0-(self.h*0.5+self.w)**2.0)])
-        I = np.array([-np.sqrt(r4**2.0-(self.h*0.5+self.w+self.absorber_choke_h)**2.0), -self.h*0.5-self.w-self.absorber_choke_h])
-        J = np.array([-np.sqrt(r1**2.0-(self.h*0.5+self.w+self.absorber_choke_h)**2.0), -self.h*0.5-self.w-self.absorber_choke_h])
-        K = np.array([-self.absorber_choke_h*0.5-self.capacitor_connector_w, -np.sqrt(r1**2.0-(self.absorber_choke_h*0.5+self.capacitor_connector_w)**2.0)])
-        L = np.array([-self.absorber_choke_h*0.5-self.capacitor_connector_w, -self.l*0.5-self.absorber_choke_d-self.absorber_choke_s-2.0*self.absorber_choke_w-self.capacitor_connector_h])
-
-        points = (A, (B[0], B[1], 0.0, 0.0, -self.bulge(B, C)), C, (D[0], D[1], 0.0, 0.0, self.bulge(D, E)), E, F, G , 
-                  (H[0], H[1], 0.0, 0.0, -self.bulge(H, I)), I, (J[0], J[1], 0.0, 0.0, self.bulge(J, K)), K, L)
-        '''
+        # quarter choke (bottom left)
         A = np.array([-self.absorber_choke_h*0.5, -np.sqrt(self.r2**2.0-(self.absorber_choke_h*0.5)**2.0)])
         B = np.array([-np.sqrt(self.r2**2.0-(self.h*0.5+self.w+self.absorber_choke_h+self.absorber_choke_w)**2.0), -self.h*0.5-self.w-self.absorber_choke_h-self.absorber_choke_w])
         C = np.array([-np.sqrt(self.r3**2.0-(self.h*0.5+self.w+self.absorber_choke_h+self.absorber_choke_w)**2.0), -self.h*0.5-self.w-self.absorber_choke_h-self.absorber_choke_w])
@@ -204,24 +188,7 @@ class DualPolCross():
         points = ((A[0], A[1], 0.0, 0.0, -self.bulge(A, B)), B, (C[0], C[1], 0.0, 0.0, self.bulge(C, D)), D, E, (F[0], F[1], 0.0, 0.0, -self.bulge(F, G)), G, (H[0], H[1], 0.0, 0.0, self.bulge(H, I)), I, J)
         self.msp.add_lwpolyline(points, close=True, dxfattribs={"layer": self.choke_layer_name})
 
-        # quarter choke (bottom right) # OK
-        '''
-        A = np.array([self.absorber_choke_h*0.5, -self.l*0.5-self.absorber_choke_d-self.absorber_choke_s-2.0*self.absorber_choke_w-self.capacitor_connector_h])
-        B = np.array([self.absorber_choke_h*0.5, -np.sqrt(r2**2.0-(self.absorber_choke_h*0.5)**2.0)])
-        C = np.array([np.sqrt(r2**2.0-(self.h*0.5+self.w+self.absorber_choke_h+self.absorber_choke_w)**2.0), -self.h*0.5-self.w-self.absorber_choke_h-self.absorber_choke_w])
-        D = np.array([np.sqrt(r3**2.0-(self.h*0.5+self.w+self.absorber_choke_h+self.absorber_choke_w)**2.0), -self.h*0.5-self.w-self.absorber_choke_h-self.absorber_choke_w])
-        E = np.array([self.h*0.5, -np.sqrt(r3**2.0-(self.h*0.5)**2.0)])
-        F = np.array([self.h*0.5, -self.l*0.5])
-        G = np.array([self.h*0.5+self.w, -self.l*0.5])
-        H = np.array([self.h*0.5+self.w, -np.sqrt(r4**2.0-(self.h*0.5+self.w)**2.0)])
-        I = np.array([np.sqrt(r4**2.0-(self.h*0.5+self.w+self.absorber_choke_h)**2.0), -self.h*0.5-self.w-self.absorber_choke_h])
-        J = np.array([np.sqrt(r1**2.0-(self.h*0.5+self.w+self.absorber_choke_h)**2.0), -self.h*0.5-self.w-self.absorber_choke_h])
-        K = np.array([self.absorber_choke_h*0.5+self.capacitor_connector_w, -np.sqrt(r1**2.0-(self.absorber_choke_h*0.5+self.capacitor_connector_w)**2.0)])
-        L = np.array([self.absorber_choke_h*0.5+self.capacitor_connector_w, -self.l*0.5-self.absorber_choke_d-self.absorber_choke_s-2.0*self.absorber_choke_w-self.capacitor_connector_h])
-
-        points = (A, (B[0], B[1], 0.0, 0.0, self.bulge(B, C)), C, (D[0], D[1], 0.0, 0.0, -self.bulge(D, E)), E, F, G , 
-                  (H[0], H[1], 0.0, 0.0, self.bulge(H, I)), I, (J[0], J[1], 0.0, 0.0, -self.bulge(J, K)), K, L)
-        '''
+        # quarter choke (bottom right) 
         A = np.array([self.absorber_choke_h*0.5, -np.sqrt(self.r2**2.0-(self.absorber_choke_h*0.5)**2.0)])
         B = np.array([np.sqrt(self.r2**2.0-(self.h*0.5+self.w+self.absorber_choke_h+self.absorber_choke_w)**2.0), -self.h*0.5-self.w-self.absorber_choke_h-self.absorber_choke_w])
         C = np.array([np.sqrt(self.r3**2.0-(self.h*0.5+self.w+self.absorber_choke_h+self.absorber_choke_w)**2.0), -self.h*0.5-self.w-self.absorber_choke_h-self.absorber_choke_w])
@@ -236,18 +203,7 @@ class DualPolCross():
         points = ((A[0], A[1], 0.0, 0.0, self.bulge(A, B)), B, (C[0], C[1], 0.0, 0.0, -self.bulge(C, D)), D, E, (F[0], F[1], 0.0, 0.0, self.bulge(F, G)), G, (H[0], H[1], 0.0, 0.0, -self.bulge(H, I)), I, J)
         self.msp.add_lwpolyline(points, close=True, dxfattribs={"layer": self.choke_layer_name})
 
-        # half choke (top) # OK
-        '''
-        A = np.array([-self.l*0.5, self.h*0.5])
-        B = np.array([-np.sqrt(r3**2.0-(self.h*0.5)**2.0), self.h*0.5])
-        C = np.array([np.sqrt(r3**2.0-(self.h*0.5)**2.0), self.h*0.5])
-        D = np.array([self.l*0.5, self.h*0.5])
-        E = np.array([self.l*0.5, self.h*0.5+self.w])
-        F = np.array([np.sqrt(r4**2.0-(self.h*0.5+self.w)**2.0), self.h*0.5+self.w])
-        G = np.array([-np.sqrt(r4**2.0-(self.h*0.5+self.w)**2.0), self.h*0.5+self.w])
-        H = np.array([-self.l*0.5, self.h*0.5+self.w])
-        points = (A, (B[0], B[1], 0.0, 0.0, -self.bulge(B, C)), C, D, E, (F[0], F[1], 0.0, 0.0, self.bulge(F, G)), G, H)
-        '''
+        # half choke (top)
         A = np.array([-np.sqrt(self.r3**2.0-(self.h*0.5)**2.0), self.h*0.5])
         B = np.array([-A[0], A[1]])
         D = np.array([np.sqrt(self.r4**2.0-(self.h*0.5+self.w)**2.0), self.h*0.5+self.w])
@@ -258,18 +214,7 @@ class DualPolCross():
         points = ((A[0], A[1], 0.0, 0.0, -self.bulge(A, B)), B, C, (D[0], D[1], 0.0, 0.0, self.bulge(D, E)), E, F)
         self.msp.add_lwpolyline(points, close=True, dxfattribs={"layer": self.choke_layer_name})
 
-        # quarter choke (top left) # OK
-        '''
-        A = np.array([-self.l*0.5, -self.h*0.5])
-        B = np.array([-np.sqrt(r2**2.0-(self.h*0.5)**2.0), -self.h*0.5])
-        C = np.array([-self.absorber_choke_h*0.5, np.sqrt(r2**2.0-(self.absorber_choke_h*0.5)**2.0)])
-        D = np.array([-self.absorber_choke_h*0.5, self.l*0.5+self.absorber_choke_d+self.absorber_choke_s+2.0*self.absorber_choke_w+self.capacitor_connector_h])
-        E = np.array([-self.absorber_choke_h*0.5-self.capacitor_connector_w, self.l*0.5+self.absorber_choke_d+self.absorber_choke_s+2.0*self.absorber_choke_w+self.capacitor_connector_h])
-        F = np.array([-self.absorber_choke_h*0.5-self.capacitor_connector_w, np.sqrt(r1**2.0-(self.absorber_choke_h*0.5+self.capacitor_connector_w)**2.0)])
-        G = np.array([-np.sqrt(r1**2.0-(self.h*0.5+self.w)**2.0), -self.h*0.5-self.w])
-        H = np.array([-self.l*0.5, -self.h*0.5-self.w])
-        points = (A, (B[0], B[1], 0.0, 0.0, -self.bulge(B, C)), C, D, E, (F[0], F[1], 0.0, 0.0, self.bulge(F, G)), G, H)
-        '''
+        # quarter choke (top left)
         A = np.array([-np.sqrt(self.r2**2.0-(self.h*0.5)**2.0), -self.h*0.5])
         B = np.array([-self.absorber_choke_h*0.5, np.sqrt(self.r2**2.0-(self.absorber_choke_h*0.5)**2.0)])
         #C = np.array([B[0], B[1]+self.absorber_choke_w])
@@ -281,17 +226,6 @@ class DualPolCross():
         self.msp.add_lwpolyline(points, close=True, dxfattribs={"layer": self.choke_layer_name})
 
         # quarter choke (top right)
-        '''
-        A = np.array([self.l*0.5, -self.h*0.5])
-        B = np.array([np.sqrt(r2**2.0-(self.h*0.5)**2.0), -self.h*0.5])
-        C = np.array([self.absorber_choke_h*0.5, np.sqrt(r2**2.0-(self.absorber_choke_h*0.5)**2.0)])
-        D = np.array([self.absorber_choke_h*0.5, self.l*0.5+self.absorber_choke_d+self.absorber_choke_s+2.0*self.absorber_choke_w+self.capacitor_connector_h])
-        E = np.array([self.absorber_choke_h*0.5+self.capacitor_connector_w, self.l*0.5+self.absorber_choke_d+self.absorber_choke_s+2.0*self.absorber_choke_w+self.capacitor_connector_h])
-        F = np.array([self.absorber_choke_h*0.5+self.capacitor_connector_w, np.sqrt(r1**2.0-(self.absorber_choke_h*0.5+self.capacitor_connector_w)**2.0)])
-        G = np.array([np.sqrt(r1**2.0-(self.h*0.5+self.w)**2.0), -self.h*0.5-self.w])
-        H = np.array([self.l*0.5, -self.h*0.5-self.w])
-        points = (A, (B[0], B[1], 0.0, 0.0, self.bulge(B, C)), C, D, E, (F[0], F[1], 0.0, 0.0, -self.bulge(F, G)), G, H)
-        '''
         A = np.array([np.sqrt(self.r2**2.0-(self.h*0.5)**2.0), -self.h*0.5])
         B = np.array([self.absorber_choke_h*0.5, np.sqrt(self.r2**2.0-(self.absorber_choke_h*0.5)**2.0)])
         #C = np.array([B[0], B[1]+self.absorber_choke_w])
@@ -346,6 +280,12 @@ class DualPolCross():
         
         # left connector
         polygons = []
+        # extra finger overlap with the capacitor
+        A = np.array([-self.capacitor_size*0.5-self.capacitor_offset, -self.l*0.5-self.absorber_choke_d-self.absorber_choke_s-2.0*self.absorber_choke_w-self.capacitor_connector_h])
+        B = np.array([A[0], A[1]-self.overlap_distance])
+        C = np.array([B[0]+self.capacitor_connector_w, B[1]])
+        D = np.array([C[0], C[1]+self.overlap_distance])
+        polygons.append(Polygon([A, B, C, D]))
         A = np.array([-self.absorber_choke_h*0.5, -self.l*0.5-self.absorber_choke_d-self.absorber_choke_s-2.0*self.absorber_choke_w-self.capacitor_connector_h])
         B = np.array([-self.capacitor_size*0.5-self.capacitor_offset, -self.l*0.5-self.absorber_choke_d-self.absorber_choke_s-2.0*self.absorber_choke_w-self.capacitor_connector_h])
         C = np.array([B[0], B[1]-self.capacitor_connector_w])
@@ -353,13 +293,19 @@ class DualPolCross():
         E = np.array([-self.absorber_choke_h*0.5, -self.l*0.5-self.absorber_choke_d-self.absorber_choke_s-2.0*self.absorber_choke_w-self.capacitor_connector_h-self.capacitor_connector_w])
         polygons.append(Polygon((A, B, C, D, E)))
         # the little connector to the choke
-        A = np.array([-self.absorber_choke_h*0.5-self.capacitor_connector_w, -np.sqrt(self.r1**2.0-(self.absorber_choke_h*0.5+self.capacitor_connector_w)**2.0)])
+        A = np.array([-self.absorber_choke_h*0.5-self.capacitor_connector_w, -np.sqrt(self.r1**2.0-(self.absorber_choke_h*0.5+self.capacitor_connector_w)**2.0)+self.overlap_distance])
         B = np.array([A[0]+self.capacitor_connector_w, A[1]])
         C = np.array([B[0], -self.l*0.5-self.absorber_choke_d-self.absorber_choke_s-2.0*self.absorber_choke_w-self.capacitor_connector_h-self.capacitor_connector_w])
         D = np.array([C[0]-self.capacitor_connector_w, C[1]])
         polygons.append(Polygon((A, B, C, D)))
 
         # right connector
+        # extra finger overlap with the capacitor
+        A = np.array([self.capacitor_size*0.5-self.capacitor_offset, -self.l*0.5-self.absorber_choke_d-self.absorber_choke_s-2.0*self.absorber_choke_w-self.capacitor_connector_h])
+        B = np.array([A[0], A[1]-self.overlap_distance])
+        C = np.array([B[0]-self.capacitor_connector_w, B[1]])
+        D = np.array([C[0], C[1]+self.overlap_distance])
+        polygons.append(Polygon([A, B, C, D]))
         A = np.array([self.absorber_choke_h*0.5, -self.l*0.5-self.absorber_choke_d-self.absorber_choke_s-2.0*self.absorber_choke_w-self.capacitor_connector_h])
         B = np.array([self.capacitor_size*0.5-self.capacitor_offset, -self.l*0.5-self.absorber_choke_d-self.absorber_choke_s-2.0*self.absorber_choke_w-self.capacitor_connector_h])
         C = np.array([B[0], B[1]-self.capacitor_connector_w])
@@ -367,7 +313,7 @@ class DualPolCross():
         E = np.array([self.absorber_choke_h*0.5, -self.l*0.5-self.absorber_choke_d-self.absorber_choke_s-2.0*self.absorber_choke_w-self.capacitor_connector_h-self.capacitor_connector_w])
         polygons.append(Polygon((A, B, C, D, E)))
         # the little connector to the choke
-        A = np.array([self.absorber_choke_h*0.5+self.capacitor_connector_w, -np.sqrt(self.r1**2.0-(self.absorber_choke_h*0.5+self.capacitor_connector_w)**2.0)])
+        A = np.array([self.absorber_choke_h*0.5+self.capacitor_connector_w, -np.sqrt(self.r1**2.0-(self.absorber_choke_h*0.5+self.capacitor_connector_w)**2.0)+self.overlap_distance])
         B = np.array([A[0]-self.capacitor_connector_w, A[1]])
         C = np.array([B[0], -self.l*0.5-self.absorber_choke_d-self.absorber_choke_s-2.0*self.absorber_choke_w-self.capacitor_connector_h-self.capacitor_connector_w])
         D = np.array([C[0]+self.capacitor_connector_w, C[1]])
@@ -421,26 +367,38 @@ class DualPolCross():
         
         # left connector
         polygons = []
+        # extra finger overlap with the capacitor
+        A = np.array([-self.capacitor_size*0.5-self.capacitor_offset, -(-self.l*0.5-self.absorber_choke_d-self.absorber_choke_s-2.0*self.absorber_choke_w-self.capacitor_connector_h)])
+        B = np.array([A[0], A[1]+self.overlap_distance])
+        C = np.array([B[0]+self.capacitor_connector_w, B[1]])
+        D = np.array([C[0], C[1]-self.overlap_distance])
+        polygons.append(Polygon([A, B, C, D]))
         A = np.array([-self.absorber_choke_h*0.5, -(-self.l*0.5-self.absorber_choke_d-self.absorber_choke_s-2.0*self.absorber_choke_w-self.capacitor_connector_h)])
         B = np.array([-self.capacitor_size*0.5-self.capacitor_offset, -(-self.l*0.5-self.absorber_choke_d-self.absorber_choke_s-2.0*self.absorber_choke_w-self.capacitor_connector_h)])
         C = np.array([B[0], B[1]+self.capacitor_connector_w])
         D = np.array([-self.absorber_choke_h*0.5, -(-self.l*0.5-self.absorber_choke_d-self.absorber_choke_s-2.0*self.absorber_choke_w-self.capacitor_connector_h-self.capacitor_connector_w)])
         polygons.append(Polygon((A, B, C, D)))
         # the little connector to the choke
-        A = np.array([-self.absorber_choke_h*0.5-self.capacitor_connector_w, np.sqrt(self.r1**2.0-(self.absorber_choke_h*0.5+self.capacitor_connector_w)**2.0)])
+        A = np.array([-self.absorber_choke_h*0.5-self.capacitor_connector_w, np.sqrt(self.r1**2.0-(self.absorber_choke_h*0.5+self.capacitor_connector_w)**2.0)-self.overlap_distance])
         B = np.array([A[0]+self.capacitor_connector_w, A[1]])
         C = np.array([B[0], -(-self.l*0.5-self.absorber_choke_d-self.absorber_choke_s-2.0*self.absorber_choke_w-self.capacitor_connector_h-self.capacitor_connector_w)])
         D = np.array([C[0]-self.capacitor_connector_w, C[1]])
         polygons.append(Polygon((A, B, C, D)))
         
         # right connector
+        # extra finger overlap with the capacitor
+        A = np.array([self.capacitor_size*0.5-self.capacitor_offset, -(-self.l*0.5-self.absorber_choke_d-self.absorber_choke_s-2.0*self.absorber_choke_w-self.capacitor_connector_h)])
+        B = np.array([A[0], A[1]+self.overlap_distance])
+        C = np.array([B[0]-self.capacitor_connector_w, B[1]])
+        D = np.array([C[0], C[1]-self.overlap_distance])
+        polygons.append(Polygon([A, B, C, D]))
         A = np.array([self.absorber_choke_h*0.5, -(-self.l*0.5-self.absorber_choke_d-self.absorber_choke_s-2.0*self.absorber_choke_w-self.capacitor_connector_h)])
         B = np.array([self.capacitor_size*0.5-self.capacitor_offset, -(-self.l*0.5-self.absorber_choke_d-self.absorber_choke_s-2.0*self.absorber_choke_w-self.capacitor_connector_h)])
         C = np.array([B[0], B[1]+self.capacitor_connector_w])
         D = np.array([self.absorber_choke_h*0.5, -(-self.l*0.5-self.absorber_choke_d-self.absorber_choke_s-2.0*self.absorber_choke_w-self.capacitor_connector_h-self.capacitor_connector_w)])
         polygons.append(Polygon((A, B, C, D)))
         # the little connector to the choke
-        A = np.array([self.absorber_choke_h*0.5+self.capacitor_connector_w, np.sqrt(self.r1**2.0-(self.absorber_choke_h*0.5+self.capacitor_connector_w)**2.0)])
+        A = np.array([self.absorber_choke_h*0.5+self.capacitor_connector_w, np.sqrt(self.r1**2.0-(self.absorber_choke_h*0.5+self.capacitor_connector_w)**2.0)-self.overlap_distance])
         B = np.array([A[0]-self.capacitor_connector_w, A[1]])
         C = np.array([B[0], -(-self.l*0.5-self.absorber_choke_d-self.absorber_choke_s-2.0*self.absorber_choke_w-self.capacitor_connector_h-self.capacitor_connector_w)])
         D = np.array([C[0]+self.capacitor_connector_w, C[1]])
